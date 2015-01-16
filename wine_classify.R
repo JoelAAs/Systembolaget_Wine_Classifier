@@ -1,11 +1,20 @@
 # The locale must be set to C for the string functions to work properly.
 Sys.setlocale(locale="C")
 
-all_wine <- read.csv("./data_mine_wine_score.csv", stringsAsFactors = F)
+# Read all the wine data and metadata.
+all_wine_data <- read.csv("./data_mine_wine_score.csv", stringsAsFactors = F)
+all_wine_data = all_wine_data[!duplicated(all_wine_data$Varnummer), ]
 
+# Read the user provided scores.
+all_wine_scores <- read.csv("./wine_scores.csv", stringsAsFactors = F)
+
+# Merge the wine data and metadata with the user given scores.
+all_wine = merge(x = all_wine_data, y = all_wine_scores, 
+		    by = "Varnummer", all = TRUE)
+
+# Load the functions needed to calculate predicted scores.
 source('./get_score_sub.R', encoding='UTF-8')
 source('./get_class_wine.R', encoding='UTF-8')
-
 source('./make_score_RCGY.R', encoding='UTF-8')
 source('./make_score_Bar.R', encoding='UTF-8')
 source('./make_score_taste.R', encoding='UTF-8')
@@ -29,5 +38,5 @@ all_wine$Taste_predicted <- predict_score_taste(all_wine,current_score_taste)
 
 all_wine$predicted_sum   <- (all_wine$RCGY_predicted + all_wine$bar_predicted + all_wine$Taste_predicted)/3
 
-
+# Order the wines by predicted sum.
 all_wine <- all_wine[order(all_wine$predicted_sum,decreasing = T),]

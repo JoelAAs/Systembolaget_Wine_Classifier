@@ -11,7 +11,7 @@ search_wine <- function(artnr) {
     #  is sold in different sizes there might be several results, head gives us
     #  just the first.
     wine = head(all_wine[which(all_wine$Varnummer == artnr), 
-	c("Varnummer", "Namn", "real_score", "predicted_sum")], 1)
+	c("Varnummer", "Namn", "GivenScore", "predicted_sum")], 1)
 
     # Make sure we actually got a result.
     if(nrow(wine) > 0) {
@@ -22,7 +22,7 @@ search_wine <- function(artnr) {
 	wine_pred = wine[[4]]
 
 	# A score of 99 is used as a placeholder for untested wines.
-	if(wine_real == 99) {
+	if(!is.finite(wine_real)) {
 
 	    message("New wine ", wine_name, " is predicted as ", wine_pred)
 
