@@ -6,7 +6,7 @@ library(stringr)
 # library(RSelenium)
 # script
 
-source('~/Rscripts/Webcrawler/Systembolaget_webcrawl/get details.R')
+source('./get details.R')
 #source.with.encoding('~/Rscripts/Webcrawler/Systembolaget_webcrawl/get_details.R', encoding='UTF-8')
 #mainindex = 0
 page  = 1
@@ -29,7 +29,7 @@ details_df<-data.frame(fyllighet = character(0), stravhet = character(0),
 
 for (j in 1:length(sys_xml.Rwine$Varnummer)) {
   k = k + 1
-  print(paste(k, " bottles on wine on the wall"))
+  print(paste(k, " bottles of wine on the wall"))
   detail_info <-get_details(sys_xml.Rwine$Varnummer[[j]])
   details_df <- rbind(details_df,detail_info)
 }
