@@ -1,3 +1,5 @@
+setwd("~/Rscripts/Webcrawler/Systembolaget_webcrawl")
+
 all_wine <- read.csv("./data_mine_wine_score.csv", stringsAsFactors = F)
 
 source.with.encoding('./get_score_sub.R', encoding='UTF-8')

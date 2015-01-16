@@ -8,7 +8,7 @@ get_details <- function(ar_id) {
   smak_split <- str_split(info, "Smak \r")
   smak_out <- "inte testat"
   if (!(length(smak_split[[1]]) < 2) ){
-    smak_split <- str_split(smak_split[[1]][2], "\r")
+    smak_split <- str_split(tolower(smak_split[[1]][2]), "\r")
     smak_split <- gsub(pattern = ",",replacement = "",x = smak_split[[1]][1])
     smak_split <- gsub(pattern = "\\.",replacement = "",x = smak_split)
     smak_split <- str_split(smak_split[[1]][1], " ")[1]
