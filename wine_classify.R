@@ -1,12 +1,23 @@
 # The locale must be set to C for the string functions to work properly.
 Sys.setlocale(locale="C")
 
+# Define the names of the files used.
+file_mine_wine = "./data_mine_wine.csv"
+file_wine_score = "./wine_scores.csv"
+
+# Make sure that the data has been mined from Systembolaget.se
+if(!file.exists(file_mine_wine)) {
+    message(" -> No data mine file.")
+
+    # TODO: Automatically start predefXML.R here.
+}
+
 # Read all the wine data and metadata.
-all_wine_data <- read.csv("./data_mine_wine_score.csv", stringsAsFactors = F)
+all_wine_data <- read.csv(file_mine_wine, stringsAsFactors = F)
 all_wine_data = all_wine_data[!duplicated(all_wine_data$Varnummer), ]
 
 # Read the user provided scores.
-all_wine_scores <- read.csv("./wine_scores.csv", stringsAsFactors = F)
+all_wine_scores <- read.csv(file_wine_score, stringsAsFactors = F)
 
 # Merge the wine data and metadata with the user given scores.
 all_wine = merge(x = all_wine_data, y = all_wine_scores, 
