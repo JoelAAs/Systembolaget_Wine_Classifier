@@ -6,12 +6,16 @@ get_score_per_word <- function(word_list ,score_list){
   for(i in 1:length(word_list)){
     if (word_list[i] %in% score_list$word){
       k = k + 1
-      score_tmp <- score_tmp + as.numeric(score_list$score[which(word_list[i] %in% score_list$word)])
+      score_tmp <- score_tmp + as.numeric(score_list$score[which(word_list[i] == score_list$word)])
     }
   }
-  if(k < 5 && k != 0){
-    return((score_tmp-3/k)/k)
+  if(k/length(word_list) < 0.3){
+    if (k == 0){
+      return(score_tmp)
+    } else {
+      return((score_tmp-3/k)/k)
+    }
   } else {
-    return(score_tmp)
+    return(score_tmp/k)
   }
 }
