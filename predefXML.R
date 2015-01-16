@@ -5,7 +5,7 @@ library(stringr)
 
 # library(RSelenium)
 # script
-source.with.encoding('~/Rscripts/Webcrawler/get details.R', encoding='UTF-8')
+source.with.encoding('./get details.R', encoding='UTF-8')
 #mainindex = 0
 page  = 1
 k = 0
@@ -16,7 +16,7 @@ save_id <-data.frame(Year = character(0),Country = character(0),
                      stravhet = character(0), fruktsyra = character(0),
                      druva = character(0), smak = character(0), doft = character(0),
                      stringsAsFactors=F)
-sys_xml<-read.csv('~/Rscripts/Webcrawler/Alla+Artiklar.csv',stringsAsFactors=F)
+sys_xml<-read.csv('./Alla+Artiklar.csv',stringsAsFactors=F)
 
 sys_xml.Rwine <- sys_xml[which(grepl('Rott vin', sys_xml$Varugrupp)),]
 

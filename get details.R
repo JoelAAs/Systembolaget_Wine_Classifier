@@ -18,7 +18,7 @@ get_details <- function(ar_id) {
   
   # BarrometervÃ¤rden
   fyllighet_split   <- str_split(info, "Fyllighet\r")
-  stravhet_split    <- str_split(info, "StrÃ¤vhet\r")
+  stravhet_split    <- str_split(info, "Strävhet\r")
   fruktsyra_split <- str_split(info, "Fruktsyra\r")
   
   if (length(fyllighet_split[[1]]) < 3) {
@@ -36,7 +36,7 @@ get_details <- function(ar_id) {
   }
   
   #Druva
-  druva_split <- str_split(info, "RÃ¥varor \r")
+  druva_split <- str_split(info, "Råvaror \r")
   if (length(druva_split[[1]]) < 2) {
     druva_out <- "Ingen anged"
   } else {
@@ -45,7 +45,7 @@ get_details <- function(ar_id) {
     druva_split <- gsub(pattern = "\\.",replacement = "",x = druva_split)
     druva_split <- str_split(druva_split, " ")[1]
     druva_split <- unlist(druva_split)
-    druva_out   <- str_join(druva_split[nchar(druva_split) > 2], collapse = ",")    
+    druva_out   <- str_join(druva_split[nchar(druva_split) > 3], collapse = ".")    
   }
   
   
