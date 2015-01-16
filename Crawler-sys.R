@@ -5,7 +5,7 @@ library(stringr)
 
 # library(RSelenium)
 # script
-source.with.encoding('~/Rscripts/Webcrawler/get details.R', encoding='UTF-8')
+source('./get details.R', encoding='UTF-8')
 #main
 index = 0
 page  = 1

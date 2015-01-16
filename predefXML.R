@@ -33,3 +33,5 @@ for (j in 1:length(sys_xml.Rwine$Varnummer)) {
 }
 
 save_id_tmp <- cbind(sys_xml.Rwine,details_df)
+
+write.csv(save_id_tmp, "./data_mine_wine.csv")

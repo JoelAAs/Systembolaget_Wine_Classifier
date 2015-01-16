@@ -1,14 +1,17 @@
+# The locale must be set to C for the string functions to work properly.
+Sys.setlocale(locale="C")
+
 all_wine <- read.csv("./data_mine_wine_score.csv", stringsAsFactors = F)
 
-source.with.encoding('./get_score_sub.R', encoding='UTF-8')
-source.with.encoding('./get_class_wine.R', encoding='UTF-8')
+source('./get_score_sub.R', encoding='UTF-8')
+source('./get_class_wine.R', encoding='UTF-8')
 
-source.with.encoding('./make_score_RCGY.R', encoding='UTF-8')
-source.with.encoding('./make_score_Bar.R', encoding='UTF-8')
-source.with.encoding('./make_score_taste.R', encoding='UTF-8')
-source.with.encoding('./predict_score_bar.R', encoding='UTF-8')
-source.with.encoding('./predict_score_RCGY.R', encoding='UTF-8')
-source.with.encoding('./predict_score_taste.R', encoding='UTF-8')
+source('./make_score_RCGY.R', encoding='UTF-8')
+source('./make_score_Bar.R', encoding='UTF-8')
+source('./make_score_taste.R', encoding='UTF-8')
+source('./predict_score_bar.R', encoding='UTF-8')
+source('./predict_score_RCGY.R', encoding='UTF-8')
+source('./predict_score_taste.R', encoding='UTF-8')
 
 # Fungerar
 current_score_RCGY       <- make_score_RCGY(all_wine)
