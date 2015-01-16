@@ -1,3 +1,4 @@
+# We need the all_wine frame, which is created by the wine_classify script
 source("wine_classify.R", encoding="UTF-8")
 
 # search_wine
@@ -9,7 +10,8 @@ search_wine <- function(artnr) {
     # Find the first wine that matches the given article number. If the wine
     #  is sold in different sizes there might be several results, head gives us
     #  just the first.
-    wine = head(all_wine[which(all_wine$Varnummer == artnr), c(4, 5, 33, 37)], 1)
+    wine = head(all_wine[which(all_wine$Varnummer == artnr), 
+	c("Varnummer", "Namn", "real_score", "predicted_sum")], 1)
 
     # Make sure we actually got a result.
     if(nrow(wine) > 0) {
