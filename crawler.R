@@ -1,15 +1,10 @@
-# packet
+# Include the required packets.
 library(XML)
 library(RCurl)
 library(stringr)
 
-# library(RSelenium)
-# script
-
-#source('./get details.R')
-
-file_alla_artiklar = "./Alla+Artiklar.csv"
-file_mine_wine     = "./data_mine_wine.csv"
+# Include the configuration file, which contains pathnames needed.
+source('./config.R')
 
 # get_details(ar_id)
 # BRIEF: Dowloads the information about the specified wine from Systembolaget.se
@@ -101,13 +96,13 @@ crawler_get_details <- function(ar_id) {
 
 }
 
-# crawler_create_wine_details_file(inputfile, outputfile)
+# crawler_create_wine_database(inputfile, outputfile)
 # BRIEF: Goues through the input file for wines and downloads wine data from
 #         Systembolaget.se. The resulting CSV file is stored as outputfile.
 # ARGUMENTS: 
 # inputfile  = The Alla+Varor.csv formatted file to read wine data from.
 # outputfile = The location to store the produced CSV file in.
-crawler_create_wine_details_file <- function(inputfile, outputfile) {
+crawler_create_wine_database <- function(inputfile, outputfile) {
 
     # Read the input file into a dataframe.
     sys_xml <- read.csv(inputfile, stringsAsFactors = F)
@@ -137,11 +132,3 @@ crawler_create_wine_details_file <- function(inputfile, outputfile) {
 
 }
 
-# This should probably be moved later.
-if(!file.exists(file_mine_wine)) {
-
-    message(" -> No mined wine details found, mining from Systembolaget...")
-    mine_wine_details(file_alla_artiklar, file_mine_wine)
-    message(" -> Done.")
-
-}
