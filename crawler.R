@@ -13,7 +13,8 @@ source('./config.R')
 # RETURNS: A dataframe holding the information about the specified wine.
 crawler_get_details <- function(ar_id) {
 
-  one_url <- paste("http://www.systembolaget.se/Sok-dryck/Dryck/?artikelId=299029&varuNr=",ar_id,"&referringUrl=%2fglobalsok",sep="")
+  one_url <- paste("http://www.systembolaget.se/Sok-dryck/Dryck/?varuNr=",
+                    ar_id, msep = "")
   tagrecode <- htmlTreeParse(one_url,useInternalNodes = T)
   root<-xmlRoot(tagrecode)
   info<-xmlValue(root[[3]][[2]])
@@ -120,7 +121,7 @@ crawler_create_wine_database <- function(inputfile, outputfile) {
     for (j in 1:length(sys_xml.Rwine$Varnummer)) {
       message(" -> ", j, " of ", length(sys_xml.Rwine$Varnummer), 
         " bottles of wine on the wall")
-      detail_info <- crawler_get_details(sys_xml.Rwine$Varnummer[[j]])
+      detail_info <- crawler_get_details(str_trim(sys_xml.Rwine$Varnummer[[j]]))
       details_df <- rbind(details_df,detail_info)
     }
 
@@ -128,7 +129,7 @@ crawler_create_wine_database <- function(inputfile, outputfile) {
     save_id_tmp <- cbind(sys_xml.Rwine, details_df)
 
     # Write the output file.
-    write.csv(save_id_tmp, output_file)
+    write.csv(save_id_tmp, outputfile)
 
 }
 
