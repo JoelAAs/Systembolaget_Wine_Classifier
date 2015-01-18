@@ -5,16 +5,21 @@
 # invar = The string to sanitize.
 # RETURNS: The sanitized version of invar.
 get_class_wine <- function(invar) {
-  all_word <- lapply(invar, function(x) x<-gsub("[0-9/%]+"        ,str_trim(tolower(x)),replacement = ""))
-  all_word <- lapply(all_word, function(x) x<-gsub("samt ovriga druvsorter",x,replacement = ""))
-  all_word <- lapply(all_word, function(x) x<-gsub("huvudsakligen"         ,x,replacement = ""))
-  all_word <- lapply(all_word, function(x) x<-gsub(" "                     ,x,replacement = ""))
-  all_word <- lapply(all_word, function(x) x<-gsub("\\."                   ,x,replacement = ""))
-  all_word <- lapply(all_word, function(x) x<-gsub("och"                   ,x,replacement = "\\."))
-  all_word <- lapply(all_word, function(x) x<-gsub("samt"                  ,x,replacement = "\\."))
-  all_word <- lapply(all_word, function(x) x<-gsub(","                   ,x,replacement = "\\."))
 
-  return(all_word)
+  # Santitize the invar string from the following strings.
+  outvar <- lapply(invar , function(x) gsub("[0-9/%]+", "", str_trim(tolower(x))))
+  outvar <- lapply(outvar, function(x) gsub("samt ovriga druvsorter", "", x))
+  outvar <- lapply(outvar, function(x) gsub("huvudsakligen", "", x))
+  outvar <- lapply(outvar, function(x) gsub(" ", "", x))
+  outvar <- lapply(outvar, function(x) gsub("\\.", "", x))
+
+  # Replace the following strings with a separator string (".").
+  outvar <- lapply(outvar, function(x) gsub("och", "\\.", x))
+  outvar <- lapply(outvar, function(x) gsub("samt", "\\.", x))
+  outvar <- lapply(outvar, function(x) gsub(",", "\\.", x))
+
+  return(outvar)
+    
 }
 
 # get_score_per_word(word_list, score_list)
@@ -27,7 +32,8 @@ get_score_per_word <- function(word_list, score_list){
   for(i in 1:length(word_list)){
     if (word_list[i] %in% score_list$word){
       k = k + 1
-      score_tmp <- score_tmp + as.numeric(score_list$score[which(word_list[i] == score_list$word)])
+      score_tmp <- score_tmp + 
+	    as.numeric(score_list$score[which(word_list[i] == score_list$word)])
     }
   }
   if(k/length(word_list) < 0.3){
@@ -141,7 +147,7 @@ make_score_RCGY <- function(wine_in){
     colnames(tmp) <- c("name", "score")
     table_out <- rbind(table_out,tmp)
   }
- 
+
   return(table_out)
 }
 
