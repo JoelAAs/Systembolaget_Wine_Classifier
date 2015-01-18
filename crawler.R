@@ -6,6 +6,28 @@ library(stringr)
 # Include the configuration file, which contains pathnames needed.
 source('./config.R')
 
+# sanitize_taste_and_smell(instr)
+# BRIEF: Removes unwanted terms from taste and smell strings.
+# ARGUMENTS:
+# instr = The string to sanitize
+sanitize_taste_and_smell <- function(instr) {
+  
+    smak_str = gsub(", *", ".", instr)
+    smak_str = gsub(" *med *", ".", smak_str)
+    smak_str = gsub(" *och *", ".", smak_str)
+    smak_str = gsub(" *inslag *av *", "", smak_str)
+    smak_str = gsub(" *smak *", "", smak_str)
+    smak_str = gsub(" *doft *", "", smak_str)
+    smak_str = gsub("  +", " ", smak_str)
+
+    smak_str = gsub("\u00F6", "o", smak_str)
+    smak_str = gsub("\u00E4", "a", smak_str)
+    smak_str = gsub("\u00E5", "a", smak_str)
+
+    return(smak_str)
+
+}
+
 # get_details(ar_id)
 # BRIEF: Dowloads the information about the specified wine from Systembolaget.se
 # ARGUMENTS:
@@ -24,17 +46,13 @@ crawler_get_details <- function(ar_id) {
   smak_out <- "inte testat"
   if (!(length(smak_split[[1]]) < 2) ){
     smak_split <- str_split(tolower(smak_split[[1]][2]), "\r")
-    smak_split <- gsub(pattern = ",",replacement = "",x = smak_split[[1]][1])
-    smak_split <- gsub(pattern = "\\.",replacement = "",x = smak_split)
-    smak_split <- str_split(smak_split[[1]][1], " ")[1]
-    smak_split <- unlist(smak_split)
-    smak_out   <- str_trim(str_join(smak_split[nchar(smak_split) > 3], 
-                                    collapse = "."))
 
-    # This is a temporary fix for a problem where the last character in the taste
-    #  string is an unknown character.
-    # TODO: FIXME FOR REAL
-    smak_out <- substr(smak_out, 0, str_length(smak_out) - 1)
+    # Create the smak_str string.
+    smak_str = substr(smak_split[[1]][1], 0, str_length(smak_split[[1]][1]) - 2)
+    smak_str = str_trim(smak_str)
+
+    # Sanitation of the smak_str string.
+    smak_out = sanitize_taste_and_smell(smak_str)
   }
   
   # Extract the clock symbol values.
@@ -59,36 +77,17 @@ crawler_get_details <- function(ar_id) {
                         substr(fruktsyra_split[[1]][2], 2 , 3), replacement = "")
   }
   
-  # Extract information about the grape used.
-  #
-  # THIS INFORMATION IS ALREADY AVAILABLE IN THE ALLA+VAROR.CSV FILE!
-  #
-  #druva_split <- str_split(info, "R.varor \r")
-  #if (length(druva_split[[1]]) < 2) {
-  #  druva_out <- "Ingen anged"
-  #} else {
-  #  druva_split <- str_split(druva_split[[1]][2], "\r")
-  #  druva_split <- gsub(pattern = ",",replacement = "",x = druva_split[[1]][1])
-  #  druva_split <- gsub(pattern = "\\.",replacement = "",x = druva_split)
-  #  druva_split <- str_split(druva_split, " ")[1]
-  #  druva_split <- unlist(druva_split)
-  #  druva_out   <- str_trim(str_join(druva_split[nchar(druva_split) > 3], 
-  #                                      collapse = "."))
-  #}
-  
-  
   # Extract information about the smell of the wine.
   doft_split <- str_split(info, "Doft \r")
   if (length(doft_split[[1]]) < 2) {
     doft_out <- "inte testat"
   } else {
-    doft_split <- str_split(doft_split[[1]][2], "\r")
-    doft_split <- gsub(pattern = ",",replacement = "",x = doft_split[[1]][1])
-    doft_split <- gsub(pattern = "\\.",replacement = "",x = doft_split)
-    doft_split <- str_split(doft_split[[1]][1], " ")[1]
-    doft_split <- unlist(doft_split)
-    doft_out   <- str_trim(str_join(doft_split[nchar(doft_split) > 3], 
-                                    collapse = "."))
+    doft_split <- str_split(doft_split[[1]][2], "\r")  
+    doft_str = substr(doft_split[[1]][1], 0, str_length(doft_split[[1]][1]) - 2)
+    doft_str = str_trim(tolower(doft_str))
+
+    # Sanitize the smell.
+    doft_out = sanitize_taste_and_smell(doft_str)
   }
   
   details_out<-data.frame(fyllighet = fyllighet_out, stravhet = stravhet_out,
@@ -113,6 +112,7 @@ crawler_create_wine_database <- function(inputfile, outputfile, maxnum = -1) {
     
     # Only pick out the red wines.
     sys_xml.Rwine <- sys_xml[which(grepl('Rott vin', sys_xml$Varugrupp)),]
+    sys_xml.Rwine <- sys_xml.Rwine[which(grepl('FS', sys_xml.Rwine$Sortiment)),]
 
     # Create a new dataframe for the details of a wine.
     details_df<-data.frame(fyllighet = character(0), stravhet = character(0),

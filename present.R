@@ -20,8 +20,7 @@ present_wine_tbl <- function(wine_table) {
     message("| ")
     
     smak_str = wine_table$smak[i]
-    smak_str = gsub("\\.", " ", smak_str)
-    smak_str = cap_first_letter(smak_str)
+    smak_str = gsub("\\.", ", ", smak_str)
 
     message("| Taste keywords: ")
     message("| ", smak_str)
