@@ -10,6 +10,7 @@ source("./config.R")
 source("./crawler.R")
 source("./classify.R", encoding="UTF-8")
 source("./search.R")
+source("./present.R")
 
 # Make sure the wine database has been created.
 if(!file.exists(file_wine_database)) {

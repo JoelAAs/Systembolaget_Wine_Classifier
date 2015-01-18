@@ -39,6 +39,15 @@ search_wine <- function(artnr) {
 
 }
 
+# search_wine_artnr(artnr)
+# BRIEF: Returns the wine that has the article number artnr.
+# ARGUMENTS:
+# artnr = The article number that describes the wine.
+# PRE:   Requires the all_wine frame to be built by wine_classify.
+search_wine_artnr <- function(artnr) {
+    return(all_wines[all_wines$Varnummer == artnr, ])
+}
+
 # search_topN(N, show_only_new)
 # BRIEF: Gives the top N wines based on rating. If show_only_new is not given
 #         (or is given as F), this includes wines which already have a score, if
@@ -52,14 +61,24 @@ search_wine <- function(artnr) {
 search_topN <- function(N, show_only_new = F) {
 
     if(show_only_new) {
-	result = head(all_wines[!is.finite(all_wines$GivenScore), c("Varnummer", "Namn", 
-		    "PredictedScore", "GivenScore")], N)
+	result = head(all_wines[!is.finite(all_wines$GivenScore),], N)
     } else {
-	result = head(all_wines[, c("Varnummer", "Namn",
-		    "PredictedScore", "GivenScore")], N)
+	result = head(all_wines, N)
     }
 
     # Return the result
     return(result)
+
+}
+
+# search_grapes()
+# BRIEF: Returns information about the scores of grapes and grape combinations.
+# PRE: Requires the classify.R source, for access to classification data and the
+#       all_wines frame.
+search_grapes <- function() {
+  
+  grapes = make_score_RCGY(all_wines)
+  grapes = grapes[which(grapes$type == "Grape"),]
+  return(grapes[order(grapes$score, decreasing = TRUE), c("name", "score")])
 
 }
