@@ -82,3 +82,14 @@ search_grapes <- function() {
   return(grapes[order(grapes$score, decreasing = TRUE), c("name", "score")])
 
 }
+
+# search_taste()
+# BRIEF: Returns information about the scores of taste terms.
+# PRE: Requires the classify.R source, for access to classifictation data and
+#       the all_wines frame.
+search_taste <- function() {
+
+  taste = make_score_taste(all_wines)
+  return(taste[order(taste$score, decreasing = TRUE), c("word", "score")])
+
+}
