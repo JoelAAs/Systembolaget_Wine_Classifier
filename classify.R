@@ -4,13 +4,14 @@
 # invar = The string to sanitize.
 # RETURNS: The sanitized version of invar.
 get_class_wine <- function(invar) {
-  all_word <- lapply(invar, function(x) x<-gsub("[0-9/%]+"        ,tolower(x),replacement = ""))
+  all_word <- lapply(invar, function(x) x<-gsub("[0-9/%]+"        ,str_trim(tolower(x)),replacement = ""))
   all_word <- lapply(all_word, function(x) x<-gsub("samt ovriga druvsorter",x,replacement = ""))
+  all_word <- lapply(all_word, function(x) x<-gsub("huvudsakligen"         ,x,replacement = ""))
+  all_word <- lapply(all_word, function(x) x<-gsub(" "                     ,x,replacement = ""))
+  all_word <- lapply(all_word, function(x) x<-gsub("\\."                   ,x,replacement = ""))
   all_word <- lapply(all_word, function(x) x<-gsub("och"                   ,x,replacement = "\\."))
   all_word <- lapply(all_word, function(x) x<-gsub("samt"                  ,x,replacement = "\\."))
-  all_word <- lapply(all_word, function(x) x<-gsub("huvudsakligen"         ,x,replacement = ""))
-  all_word <- lapply(all_word, function(x) x<-gsub("\\."                   ,x,replacement = ""))
-  all_word <- lapply(all_word, function(x) x<-gsub(" "                     ,x,replacement = ""))
+  all_word <- lapply(all_word, function(x) x<-gsub(","                   ,x,replacement = "\\."))
 
   return(all_word)
 }
@@ -89,7 +90,7 @@ make_score_Bar <- function(wine_in){
     colnames(tmp)  <- c("name","score")
     table_fruktsyra <- rbind(table_fruktsyra,tmp)
   }
-  
+
   return(list(table_fyllighet,table_stravhet,table_fruktsyra))
   
 }
@@ -101,7 +102,7 @@ make_score_RCGY <- function(wine_in){
   
   table_out             <- data.frame(name =character(0),score = numeric(0), stringsAsFactors=F)
   wine_in               <- wine_in[which(is.finite(wine_in$GivenScore)),]
-  wine_in$simple_region <- unlist(lapply(wine_in$Ursprung, function(x) x<- strsplit(x,"\\.")[[1]][1]))
+  wine_in$simple_region <- unlist(lapply(wine_in$Ursprung, function(x) x<- strsplit(x,",")[[1]][1]))
   wine_in$class_grape   <- unlist(get_class_wine(wine_in$RavarorBeskrivning))
   regions <- unlist(unique(wine_in$simple_region))
   regions <- regions[!is.na(regions)]
@@ -111,7 +112,7 @@ make_score_RCGY <- function(wine_in){
   grape   <- grape[!is.na(grape)]
   year    <- unique(wine_in$Argang)
   year    <- year[!is.na(year)]
-  
+ 
   for(i in 1:length(regions)){
     tmp <- data.frame(regions[i],mean(wine_in$GivenScore[which(wine_in$simple_region == regions[i])]), stringsAsFactors = F)
     colnames(tmp) <- c("name", "score")
@@ -135,7 +136,7 @@ make_score_RCGY <- function(wine_in){
     colnames(tmp) <- c("name", "score")
     table_out <- rbind(table_out,tmp)
   }
-  
+ 
   return(table_out)
 }
 
@@ -151,11 +152,13 @@ make_score_taste <- function(wine_in){
   taste_score  <- data.frame(word = character(0), score = numeric(0), stringsAsFactors = F)
   
   for (i in 1:length(unique_taste)){
-    score_tmp           <- data.frame(unique_taste[i], mean(wine_in$GivenScore[which(grepl(unique_taste[i] ,wine_in$smak))]),stringsAsFactors = F)
+
+    score_tmp           <- data.frame(unique_taste[i], mean(wine_in$GivenScore[which(grepl(unique_taste[i], wine_in$smak, F, F, T))]),stringsAsFactors = F)
     colnames(score_tmp) <- c("word","score")
     taste_score         <- rbind(taste_score,score_tmp)
   }
- return(taste_score) 
+
+  return(taste_score) 
 }
 
 # predict_score_RCGY(wine_in, current_score_RCGT)
@@ -163,7 +166,7 @@ make_score_taste <- function(wine_in){
 predict_score_RCGY <-function(wine_in, current_score_RCGY){
   score_RCGY <- c() 
   
-  wine_in$simple_region <- unlist(lapply(wine_in$Ursprung, function(x) x<- strsplit(x,"\\.")[[1]][1]))
+  wine_in$simple_region <- unlist(lapply(wine_in$Ursprung, function(x) x<- strsplit(x,",")[[1]][1]))
   wine_in$class_grape   <- get_class_wine(wine_in$RavarorBeskrivning)
   
   for (i in 1:length(wine_in$Artikelid)){
@@ -190,7 +193,7 @@ predict_score_RCGY <-function(wine_in, current_score_RCGY){
     }
     score_RCGY[i] <- mean(c(R,C,G,Y),na.rm=TRUE)-p
   }
-  
+ 
   return(score_RCGY)
 }
 
@@ -223,7 +226,6 @@ predict_score_bar <- function(wine_in, current_score_bar){
   }
   
   return(score_bar)
-  
   
 }
 
