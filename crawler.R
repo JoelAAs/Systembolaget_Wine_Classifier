@@ -60,18 +60,21 @@ crawler_get_details <- function(ar_id) {
   }
   
   # Extract information about the grape used.
-  druva_split <- str_split(info, "R.varor \r")
-  if (length(druva_split[[1]]) < 2) {
-    druva_out <- "Ingen anged"
-  } else {
-    druva_split <- str_split(druva_split[[1]][2], "\r")
-    druva_split <- gsub(pattern = ",",replacement = "",x = druva_split[[1]][1])
-    druva_split <- gsub(pattern = "\\.",replacement = "",x = druva_split)
-    druva_split <- str_split(druva_split, " ")[1]
-    druva_split <- unlist(druva_split)
-    druva_out   <- str_trim(str_join(druva_split[nchar(druva_split) > 3], 
-                                        collapse = "."))
-  }
+  #
+  # THIS INFORMATION IS ALREADY AVAILABLE IN THE ALLA+VAROR.CSV FILE!
+  #
+  #druva_split <- str_split(info, "R.varor \r")
+  #if (length(druva_split[[1]]) < 2) {
+  #  druva_out <- "Ingen anged"
+  #} else {
+  #  druva_split <- str_split(druva_split[[1]][2], "\r")
+  #  druva_split <- gsub(pattern = ",",replacement = "",x = druva_split[[1]][1])
+  #  druva_split <- gsub(pattern = "\\.",replacement = "",x = druva_split)
+  #  druva_split <- str_split(druva_split, " ")[1]
+  #  druva_split <- unlist(druva_split)
+  #  druva_out   <- str_trim(str_join(druva_split[nchar(druva_split) > 3], 
+  #                                      collapse = "."))
+  #}
   
   
   # Extract information about the smell of the wine.
@@ -89,9 +92,8 @@ crawler_get_details <- function(ar_id) {
   }
   
   details_out<-data.frame(fyllighet = fyllighet_out, stravhet = stravhet_out,
-                         fruktsyra = fruktsyra_out, druva = druva_out,
-                         smak = smak_out, doft = doft_out,
-                         stringsAsFactors=F)
+                         fruktsyra = fruktsyra_out, smak = smak_out, 
+			 doft = doft_out, stringsAsFactors = F)
   
   return(details_out)
 
@@ -103,7 +105,8 @@ crawler_get_details <- function(ar_id) {
 # ARGUMENTS: 
 # inputfile  = The Alla+Varor.csv formatted file to read wine data from.
 # outputfile = The location to store the produced CSV file in.
-crawler_create_wine_database <- function(inputfile, outputfile) {
+# maxnum     = The maximum number of wines to download. -1 for unlimited.
+crawler_create_wine_database <- function(inputfile, outputfile, maxnum = -1) {
 
     # Read the input file into a dataframe.
     sys_xml <- read.csv(inputfile, stringsAsFactors = F)
@@ -117,16 +120,20 @@ crawler_create_wine_database <- function(inputfile, outputfile) {
                            smak = character(0), doft = character(0),
                            stringsAsFactors=F)
 
+    # If no limit was placed, make sure we get the info for every wine.
+    if(maxnum == -1) {
+	maxnum = length(sys_xml.Rwine$Varnummer)
+    }
+
     # Get the details of every wine in the input file.
-    for (j in 1:length(sys_xml.Rwine$Varnummer)) {
-      message(" -> ", j, " of ", length(sys_xml.Rwine$Varnummer), 
-        " bottles of wine on the wall")
+    for (j in 1:maxnum) {
+      message(" -> ", j, " of ", maxnum, " bottles of wine on the wall")
       detail_info <- crawler_get_details(str_trim(sys_xml.Rwine$Varnummer[[j]]))
       details_df <- rbind(details_df,detail_info)
     }
 
     # Join the details of the wine to the other information.
-    save_id_tmp <- cbind(sys_xml.Rwine, details_df)
+    save_id_tmp <- cbind(sys_xml.Rwine[1:maxnum,], details_df)
 
     # Write the output file.
     write.csv(save_id_tmp, outputfile)
