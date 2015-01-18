@@ -1,5 +1,6 @@
 # get_class_wine(invar)
-# BRIEF: Sanitizes invar from known "useless" words.
+# BRIEF: Sanitizes invar from known "useless" words. Intended to be used for
+#         grape strings.
 # ARGUMENTS:
 # invar = The string to sanitize.
 # RETURNS: The sanitized version of invar.
@@ -41,11 +42,15 @@ get_score_per_word <- function(word_list, score_list){
 }
 
 # get_score_sub(in_str, current_score)
-# BRIEF: 
+# BRIEF: Returns the current score of in_str, based on current_score.
+# ARGUMENTS:
+# in_str        = The term to lookup the score for.
+# current_score = The dictionary to use.
+# RETURNS: The score for the term if found, NA otherwise.
 get_score_sub <- function(in_str, current_score){
   
   if(in_str %in% current_score$name){
-    score <- current_score$score[grepl(in_str,current_score$name)]
+    score <- current_score$score[grepl(in_str,current_score$name, F, F, T)]
   }else{
     score <- NA
   }
@@ -168,30 +173,32 @@ predict_score_RCGY <-function(wine_in, current_score_RCGY){
   
   wine_in$simple_region <- unlist(lapply(wine_in$Ursprung, function(x) x<- strsplit(x,",")[[1]][1]))
   wine_in$class_grape   <- get_class_wine(wine_in$RavarorBeskrivning)
-  
+
   for (i in 1:length(wine_in$Artikelid)){
+
     k = 0
     R <- get_score_sub(wine_in$simple_region[i], current_score_RCGY)
-    if(is.na(R)){
-      k= k +1
+    if(is.na(R)) {
+      k = k + 1
     }
-    C <- get_score_sub(wine_in$Ursprung[i], current_score_RCGY)
-    if(is.na(C)){
-      k= k +1
+    C <- get_score_sub(wine_in$Ursprunglandnamn[i], current_score_RCGY)
+    if(is.na(C)) {
+      k = k + 1
     }
     G <- get_score_sub(wine_in$class_grape[i], current_score_RCGY)
-    if(is.na(G)){
-      k= k +1
+    if(is.na(G)) {
+      k = k + 1
     }
     Y <- get_score_sub(wine_in$Argang[i], current_score_RCGY)
-    if(is.na(Y)){
-      k= k +1
+    if(is.na(Y)) {
+      k = k + 1
     }
-    p = 5*k/4
+    p = 50*k/4
     if(k == 4){
-      p = NA
+      p = 0
     }
-    score_RCGY[i] <- mean(c(R,C,G,Y),na.rm=TRUE)-p
+
+    score_RCGY[i] <- mean(c(R,C,G,Y),na.rm=TRUE) - p
   }
  
   return(score_RCGY)
@@ -204,6 +211,7 @@ predict_score_bar <- function(wine_in, current_score_bar){
   score_bar <- c() 
 
   for (i in 1:length(wine_in$Artikelid)){
+
     k = 0
     Fyll <- get_score_sub(wine_in$fyllighet[i], current_score_bar[[1]])
     if(is.na(Fyll)){
@@ -218,11 +226,13 @@ predict_score_bar <- function(wine_in, current_score_bar){
       k = k + 1
     }
     
-    p = 5*k/3
-    if(k == 4){
-      p = NA
+    p = 50*k/3
+    if(k == 3){
+      p = 0
     }
+
     score_bar[i] <- mean(c(Frukts,Strav,Fyll),na.rm=TRUE)- p
+
   }
   
   return(score_bar)
@@ -234,7 +244,7 @@ predict_score_bar <- function(wine_in, current_score_bar){
 predict_score_taste <- function(all_wine,current_score_taste){
   
   score_out <- unlist(lapply(all_wine$smak, function(x) x<- get_score_per_word(x,current_score_taste)))
-  
+
   return(score_out)
 }
 
@@ -259,20 +269,21 @@ classify_wines <- function(winefile, scorefile) {
     all_wine = merge(x = all_wine_data, y = all_wine_scores, 
                 by = "Varnummer", all = TRUE)
 
-    # Fungerar
+    # Calculate the current scores for each property.
     current_score_RCGY       <- make_score_RCGY(all_wine)
     current_score_bar        <- make_score_Bar(all_wine)
     current_score_taste      <- make_score_taste(all_wine)
 
-    # Fungerar
+    # Predict the score for all wines based on previous scores.
     all_wine$RCGY_predicted  <- predict_score_RCGY(all_wine,current_score_RCGY)
     all_wine$bar_predicted   <- predict_score_bar(all_wine, current_score_bar)
     all_wine$Taste_predicted <- predict_score_taste(all_wine,current_score_taste)
+    all_wine$PredictedScore  <- (all_wine$RCGY_predicted   + 
+				 all_wine$bar_predicted    + 
+				 all_wine$Taste_predicted) / 3
 
-    all_wine$predicted_sum   <- (all_wine$RCGY_predicted + all_wine$bar_predicted + all_wine$Taste_predicted)/3
-
-    # Order the wines by predicted sum. and return the dataframe..
-    return(all_wine[order(all_wine$predicted_sum,decreasing = T),])
+    # Order the wines by predicted score. and return the dataframe..
+    return(all_wine[order(all_wine$PredictedScore,decreasing = T),])
 
 }
 

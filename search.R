@@ -10,7 +10,7 @@ search_wine <- function(artnr) {
     #  is sold in different sizes there might be several results, head gives us
     #  just the first.
     wine = head(all_wines[which(all_wines$Varnummer == artnr), 
-	c("Varnummer", "Namn", "GivenScore", "predicted_sum")], 1)
+	c("Varnummer", "Namn", "GivenScore", "PredictedScore")], 1)
 
     # Make sure we actually got a result.
     if(nrow(wine) > 0) {
@@ -53,10 +53,10 @@ search_topN <- function(N, show_only_new = F) {
 
     if(show_only_new) {
 	result = head(all_wines[!is.finite(all_wines$GivenScore), c("Varnummer", "Namn", 
-		    "predicted_sum", "GivenScore")], N)
+		    "PredictedScore", "GivenScore")], N)
     } else {
-	result = head(all_wines[, c("Varnummer", "Namn", 
-		    "predicted_sum", "GivenScore")], N)
+	result = head(all_wines[, c("Varnummer", "Namn",
+		    "PredictedScore", "GivenScore")], N)
     }
 
     # Return the result
