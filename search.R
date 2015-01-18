@@ -1,6 +1,8 @@
-# search_wine
+# search_wine(artnr)
 # BRIEF: Searches all_wine for the wine with article number artnr and prints
 #         the predicted or real score, depending on if it is known or not.
+# ARGUMENTS:
+# artnr = The article id of the wine to search for.
 # PRE:   Requires the all_wine frame to be built by wine_classify.
 search_wine <- function(artnr) {
 
@@ -37,3 +39,27 @@ search_wine <- function(artnr) {
 
 }
 
+# search_topN(N, show_only_new)
+# BRIEF: Gives the top N wines based on rating. If show_only_new is not given
+#         (or is given as F), this includes wines which already have a score, if
+#         show_only_new is given as T, all wines which already have a score will
+#         be ignored.
+# ARGUMENTS:
+# N             = The number of wines to show.
+# show_only_new = If T, includes only wines that have not been assigned a real
+#                  score, otherwise, include all wines.
+# PRE:   Requires the all_wine frame to be built by wine_classify.
+search_topN <- function(N, show_only_new = F) {
+
+    if(show_only_new) {
+	result = head(all_wines[!is.finite(all_wines$GivenScore), c("Varnummer", "Namn", 
+		    "predicted_sum", "GivenScore")], N)
+    } else {
+	result = head(all_wines[, c("Varnummer", "Namn", 
+		    "predicted_sum", "GivenScore")], N)
+    }
+
+    # Return the result
+    return(result)
+
+}
