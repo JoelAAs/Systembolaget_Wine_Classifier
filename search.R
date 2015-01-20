@@ -1,44 +1,3 @@
-# search_wine(artnr)
-# BRIEF: Searches all_wine for the wine with article number artnr and prints
-#         the predicted or real score, depending on if it is known or not.
-# ARGUMENTS:
-# artnr = The article id of the wine to search for.
-# PRE:   Requires the all_wine frame to be built by wine_classify.
-search_wine <- function(artnr) {
-
-    # Find the first wine that matches the given article number. If the wine
-    #  is sold in different sizes there might be several results, head gives us
-    #  just the first.
-    wine = head(all_wines[which(all_wines$Varnummer == artnr), 
-	c("Varnummer", "Namn", "GivenScore", "PredictedScore")], 1)
-
-    # Make sure we actually got a result.
-    if(nrow(wine) > 0) {
-
-	# Extract the information we need to human readable variable names.
-	wine_name = wine[[2]]
-	wine_real = wine[[3]]
-	wine_pred = wine[[4]]
-
-	# A score of 99 is used as a placeholder for untested wines.
-	if(!is.finite(wine_real)) {
-
-	    message("New wine ", wine_name, " is predicted as ", wine_pred)
-
-	} else {
-
-	    message("Previously tested ", wine_name, " was given ", wine_real)
-
-	}
-
-    } else {
-
-	message("Could not find such a wine.")
-
-    }
-
-}
-
 # search_wine_artnr(artnr)
 # BRIEF: Returns the wine that has the article number artnr.
 # ARGUMENTS:
@@ -106,6 +65,38 @@ search_topN <- function(N, show_only_new = F) {
 
 }
 
+# search_taste_terms(tvec)
+# BRIEF: Returns all wines which contains the specified taste strings.
+# ARGUMENTS:
+# tvec = A vector of search terms.
+search_taste_terms <- function(tvec) {
+
+  search_string <- "^"
+
+  for(i in 1:length(tvec)) {
+
+    search_string <- paste(search_string, "(?=.*\\b", tvec[i], "\\b)", sep="")
+
+  }
+
+  search_string <- paste(search_string, ".*$", sep="")
+
+  return(all_wines[which(grepl(search_string, all_wines$smak, F, T)),])
+
+}
+
+# search_region()
+# BRIEF: Returns information about the scores of regions.
+# PRE: Requires the classify.R source, for access to classification data and the
+#       all_wines frame.
+search_region <- function() {
+
+  regions <- make_score_RCGY(all_wines)
+  regions <- regions[which(regions$type == "Region"),]
+  return(regions[order(regions$score, decreasing = TRUE), c("name", "score")])
+
+}
+
 # search_grapes()
 # BRIEF: Returns information about the scores of grapes and grape combinations.
 # PRE: Requires the classify.R source, for access to classification data and the
@@ -163,25 +154,5 @@ search_wine_unclear_score <- function() {
   }
 
   return(my_wine[order(my_wine$PredScoreDiff, decreasing = T),])
-
-}
-
-# search_taste_terms(tvec)
-# BRIEF: Returns all wines which contains the specified taste strings.
-# ARGUMENTS:
-# tvec = A vector of search terms.
-search_taste_terms <- function(tvec) {
-
-  search_string <- "^"
-
-  for(i in 1:length(tvec)) {
-
-    search_string <- paste(search_string, "(?=.*\\b", tvec[i], "\\b)", sep="")
-
-  }
-
-  search_string <- paste(search_string, ".*$", sep="")
-
-  return(all_wines[which(grepl(search_string, all_wines$smak, F, T)),])
 
 }
