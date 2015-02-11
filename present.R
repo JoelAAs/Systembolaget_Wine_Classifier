@@ -15,7 +15,7 @@ present_wine_tbl <- function(wine_table) {
       full_name = paste(full_name, "-", wine_table$Namn2[i])
     }
 
-    message("+----[ ", full_name, " ]-------------")
+    message("+--[ ", i, " ]--[ ", full_name, " ]-------------")
     message("| Nr: ", wine_table$Varnummer[i], 
 	    "   Predicted score: ", round(wine_table$PredictedScore[i]),
 	    "   Given score: ", wine_table$GivenScore[i])
