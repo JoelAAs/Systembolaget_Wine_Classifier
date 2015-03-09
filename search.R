@@ -21,6 +21,19 @@ search_wine_name <- function(name) {
 
 }
 
+# search_wine_grape(grape)
+# BRIEF: Returns all wines whose RavarorBeskrivning string contains grape.
+# ARGUMENTS:
+# grape = The grape name to search for.
+# RETURNS: All wines that contain grape in RavarorBeskrivning.
+# PRE: Requires the all_wine frame to be built by wine_classify.
+search_wine_grape <- function(grape) {
+    
+    return(all_wines[
+        which(grepl(grape, all_wines$RavarorBeskrivning, F, F, T)),])
+
+}
+
 # search_wine_predscore_price(minscore, maxscore, minprice, maxprice)
 # BRIEF: Returns all wines that have a score between minscore and maxscore, with
 #         a price between minprice and maxscore. Both intervals are inclusive.
