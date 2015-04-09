@@ -53,7 +53,7 @@ arg2list<-function(args){
 
 
 string_filter<-function(myWine, regexp, cname){
-  # här ska du splitta regexp på ;
+  regexp = str_split(regexp, ";"); #TODO: kolla om denna fungerar
   outWine <- myWine[which(myWine[grepl(regexp, myWine[cname])]),]
   return(outwine);
 }
