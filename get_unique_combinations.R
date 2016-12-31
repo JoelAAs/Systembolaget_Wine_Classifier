@@ -1,11 +1,116 @@
+#calculate_combination_weights <- function(all_wine_data, all_wine_scores){
+#  allWine     = merge(x = all_wine_data, y = all_wine_scores,
+#                      by = "Varnummer", all = TRUE)
+#  allWine     = allWine[!duplicated(allWine$Namn), ]
+#  allWine     = allWine[!duplicated(allWine$Varnummer), ]
+#  allWine     = allWine[!is.na(allWine$smak), ]
+#  scoredWine  = allWine[!is.na(allWine$GivenScore),]
+#
+#  for (i in 1:nrow(scoredWine)) {
+#    leftOutTest <- scoredWine[i, ] # AKA Leave-one-out cross-validation
+#    traningSet  <- scoredWine[-i,]
+#    trainedTree <- create_full_tree(traningSet) # TODO: förstå varför den klagar, borde inte vara för mycket (förmycket data blir fel? borde inte) Av någon anledning är coveage högre än vad det borde
+#
+#    testWords             <- sort(unlist(strsplit(leftOutTest$smak,"\\.")))
+#    testWords             <- testWords[testWords != ""]  #NOTE: Fulhack för någonstans lägger den in ".."
+#    testScoreDF           <- create_combination_score_DF(testWords, trainedTree)
+#    testScoreDF$FullScore <- testScoreDF$DepthScore*testScoreDF$Coverage
+#
+#    if(!is.null(nrow(testScoreDF)) && nrow(testScoreDF) != 0){
+#      meanScoreDepthTmp           <- ddply(testScoreDF,
+#                                         c("Depth"),
+#                                         function(x) c(sum(x$FullScore)/sum(x$Coverage),sum(x$Coverage))) #Package plyr
+#
+#      colnames(meanScoreDepthTmp)  <- c("Depth", "AvgDepthScore", "TotalCoverage")
+#      meanScoreDepthTmp$GivenScore <- rep(leftOutTest$GivenScore,nrow(meanScoreDepthTmp))
+#      meanScoreDepthTmp$ID         <- rep(i,nrow(meanScoreDepthTmp))
+#      meanScoreDepthTmp$Depth      <- as.numeric(meanScoreDepthTmp$Depth)
+#      if(exists("meanScoreDepth")){
+#        meanScoreDepth <- rbind(meanScoreDepth, meanScoreDepthTmp)
+#      } else {
+#        meanScoreDepth <- meanScoreDepthTmp
+#      }
+#    }
+#  }
+#  meanScoreDepth$Depth <- as.numeric(meanScoreDepth$Depth)
+#  depthWeights         <- array(NA,length(unique(meanScoreDepth$Depth)) - 1,
+#                          dimnames = list(unique(meanScoreDepth$Depth)[-1]))
+#
+#  for (j in unique(meanScoreDepth$Depth)[-1]){ #This works since depth 1 will allways be first
+#    usedData <- meanScoreDepth[meanScoreDepth$Depth == j]
+#    weight   <- sum(usedData$GivenScore*usedData$TotalCoverage)/
+#                sum(usedData$AvgDepthScore*usedData$TotalCoverage)
+#
+#    error_function <- function(parameterInital){
+#
+#    }
+#
+#      # TODO LISTA UT VAFAN DU DSKA GÖRA MED DET HÄR NURÅ?
+#  }
+#  #TODO: Nu har du din data, dags att analysera
+#}
 
-get_tree_score_per_depth  <- function(reviewWords, wineTree){
-  # TODO: Döp om Funktionen. Denna skall Predicta för alla (lägg in alla för 1 combinations ord med?)
-  # Denna skall "vikta" så den passar så bra som möjligt (1 ord två tre osv) men OLS för det är näst- nästa projekt
-  # Nästa projekt är att skapa en tränings rutin med leave one out.
+## ----------------------------------------------------------------------------------------------------------------------
+## -------------------------------------------- Predciction score functions ---------------------------------------------
+## ----------------------------------------------------------------------------------------------------------------------
+
+# predict_function_negativelog(allWineData, scoredWineData)
+# BRIEF: Predict a score for all wines dependent of the -log(frequency) of the specific combinations and words.
+# ARGUMENTS:
+# allWineData    = Data frame of all information from systembolaget
+# RETURNS: (double) The predicted score of the wine. NA if no combinatiopns are present
+predict_function_negativelog <- function(allWine){
+  scoredWine   = allWine[!is.na(allWine$GivenScore),]
+  scoredWine      = scoredWine[!is.na(scoredWine$smak), ]
+  
+  nrDataPoints <- calculate_nr_points_in_tree(scoredWine)
+  wineTree     <- create_full_tree(scoredWine)
+
+  allWine$NegLogPred <- sapply(allWine$smak, function(x)
+    distance_function_negativelog(sort(unlist(strsplit(x,"\\."))),
+      wineTree,
+      nrDataPoints))
+
+  return(allWine)
+
 }
 
-# create_combination_score_DF <- function(reviewWords,wineTree)
+# create_combination_score_DF(reviewWords, wineTree, nrDataPoints)
+# BRIEF: Predict a score dependent of the -log(frequency) of the specific combinations and words.
+# ARGUMENTS:
+# reviewWords = Array of key words (NOTE: THE WORDS ARE ASSUMED TO BE ORDERED ALPHABETICALY)
+# wineTree    = Hashtree with all words in each combinations of scored.
+# RETURNS: (double) The predicted score of the wine. NA if no combinatiopns are present
+distance_function_negativelog <- function(reviewWords, wineTree, nrDataPoints) {
+  if (is.na(reviewWords[1])) {
+    return(NA)
+  }
+  reviewWords            <- reviewWords[reviewWords != ""]  #NOTE: Fulhack för någonstans lägger den in ".."
+  currentWineCombination <- combination_of_length(reviewWords)
+  nrRowCurrent           <- nrow(currentWineCombination)
+  negLogFreqArray        <- array(NA,nrow(currentWineCombination))
+  meanScoreArray         <- array(NA,nrow(currentWineCombination))
+
+  for (i in 1:nrRowCurrent){
+    currentCombination <- unlist(strsplit(currentWineCombination[i,1],"\t"))
+    scoringArray       <- get_score_combination(wineTree,currentCombination)
+    if (!is.na(scoringArray[1])) {
+      meanScoreArray[i]  <- mean(scoringArray)
+      negLogFreqArray[i] <- -log(length(scoringArray)/nrDataPoints)
+    }
+  }
+  negLogFreqArray <- negLogFreqArray[!is.na(negLogFreqArray)]
+  meanScoreArray  <- meanScoreArray[!is.na(meanScoreArray)]
+  negLogFreqArray <- negLogFreqArray/sum(negLogFreqArray)
+
+  if(length(meanScoreArray) != 0) {
+    return(sum(meanScoreArray * negLogFreqArray))
+  } else {
+    return(NA)
+  }
+}
+
+# create_combination_score_DF(reviewWords,wineTree)
 # BRIEF: Matches all combinations of key words in rewiew to created wineTree
 # ARGUMENTS:
 # reviewWords = Array of key words (NOTE: THE WORDS ARE ASSUMED TO BE ORDERED ALPHABETICALY)
@@ -13,12 +118,16 @@ get_tree_score_per_depth  <- function(reviewWords, wineTree){
 # RETURNS: CSV with predicted scores sorted to the number of matched words
 create_combination_score_DF <- function(reviewWords,wineTree){
   combinationsDepthScoreCoverage <- as.data.frame(combination_of_length(reviewWords),
-    stringsAsFactors = F)
+                                                  stringsAsFactors = F) # Get word combinations
   colnames(combinationsDepthScoreCoverage) <- c("KeyCombinations","Depth")
   scoreAndCoverage     <- sapply(combinationsDepthScoreCoverage$KeyCombinations,
-    function(x) get_score_combination(wineTree,unlist(strsplit(x,"\t"))))
-  combinationsDepthScoreCoverage$DepthScore <- scoreAndCoverage[2,]
+                                 function(x) get_score_combination(wineTree,unlist(strsplit(x,"\t")))) # Get score and coverage of each combination
+
+  combinationsDepthScoreCoverage$DepthScore <- scoreAndCoverage[2,] # Add score and coverage to data frame
   combinationsDepthScoreCoverage$Coverage   <- scoreAndCoverage[1,]
+  combinationsDepthScoreCoverage = combinationsDepthScoreCoverage[
+    !is.na(combinationsDepthScoreCoverage$DepthScore),] #Remove combinations without data
+
   return(combinationsDepthScoreCoverage)
 }
 
@@ -28,11 +137,11 @@ create_combination_score_DF <- function(reviewWords,wineTree){
 # reviewWords = Array of key words (NOTE: THE WORDS ARE ASSUMED TO BE ORDERED ALPHABETICALY)
 # RETURNS: Matrix with all combinations(column 1) and depth (column 2)
 combination_of_length <- function(reviewWords){
-  for(depth in 2:length(reviewWords)){
+  for(depth in 1:length(reviewWords)){
     combinations <- c()
     for (i in 1:(length(reviewWords)-depth+1)){
-      combinations <-c(combinations,
-        unlist(combination_of_length_p(reviewWords[i:length(reviewWords)],depth)))
+      combinations <- c(combinations,
+                       unlist(combination_of_length_p(reviewWords[i:length(reviewWords)],depth)))
     }
     combinationDepthMatTmp <- matrix(NA,length(combinations),2)
     combinationDepthMatTmp[,1] <- combinations
@@ -58,7 +167,7 @@ combination_of_length_p <- function(reviewWords,depth) {
       return(reviewWords[i])
     } else {
       nextLevel <- sapply((i+1):(i+1+length(reviewWords)-depth), function(j)
-                            combination_of_length_p(reviewWords[j:length(reviewWords)], depth-1))
+        combination_of_length_p(reviewWords[j:length(reviewWords)], depth-1))
       #print(nextLevel)
       #print("Slut")
       return(sapply(nextLevel, function(x) paste(reviewWords[i],unlist(x),sep="\t")))
@@ -76,15 +185,58 @@ get_score_combination <- function(wineTree,combinationWords){
   if(length(combinationWords) == 0){
     return(wineTree[["value"]])
   } else if (!combinationWords[1] %in% ls(wineTree)) {
-    return(NA)
+    return(c(NA))
   } else {
     #print(combinationWords)
     return(get_score_combination(
-       wineTree[[combinationWords[1]]],
-       combinationWords[-1]))
+      wineTree[[combinationWords[1]]],
+      combinationWords[-1]))
   }
 }
 
+# calculate_nr_points_in_tree(scoredWine)
+# BRIEF: Calculates the number of datapoints in the tree
+# ARGUMENTS:
+# scoredWine = Data frame contaning all wines with given score
+# RETURNS: number of datapoint in the wineTree
+calculate_nr_points_in_tree <- function(scoredWine) {
+  for(i in 1:nrow(scoredWine)){
+    nrUniqueWords  <- length(unlist(strsplit(scoredWine[i,"smak"],"\\.")))
+    combinationTmp <- sum(
+      sapply(1:nrUniqueWords,
+        function(x)  choose(nrUniqueWords,x)))
+    if(exists("nrCombinations")) {
+      nrCombinations = nrCombinations + combinationTmp
+    } else {
+      nrCombinations = combinationTmp
+    }
+  }
+  return(nrCombinations)
+}
+
+
+## ----------------------------------------------------------------------------------------------------------------------
+## ------------------------------------------ Scoring tree creation and update ------------------------------------------
+## ----------------------------------------------------------------------------------------------------------------------
+
+# create_full_treefunction(scoredWine)
+# BRIEF: creates scoring hashTree
+# ARGUMENTS:
+# scoredWine = Data frame with data from scored wines
+# RETURNS: hashTree updated with all combination score
+create_full_tree <- function(scoredWine){
+  wineTree <- new.env(hash = t,parent = emptyenv())
+
+  for (i in 1:length(scoredWine$GivenScore)){
+    wordList <- sort(unlist(unique(strsplit(scoredWine$smak[i], "\\."))))
+    wordList <- wordList[wordList != ""]
+    score    <- scoredWine$GivenScore[i]
+    winetree <- update_tree(wineTree = wineTree,
+                                setin = wordList,
+                                score = score)
+  }
+  return(wineTree)
+}
 
 # update_tree <- function(setin, wineTree, score)
 # BRIEF: inserts all unique combinations made from array to hashtree
@@ -94,11 +246,11 @@ get_score_combination <- function(wineTree,combinationWords){
 # score    = the given score of the wine
 # RETURNS: The hashTree updated with the new wine tastes.
 update_tree <- function(setin, wineTree, score){
-  for (i in 2:length(setin)){
+  for (i in 1:length(setin)){
     output= tree_unique_combinations(setin, i)
     for (j in 1:length(output)){
-       wineTree = insert_combinations(wineTree,
-          output[[j]], i, array(0,i), score)
+      wineTree = insert_combinations(wineTree,
+                                     output[[j]], i, array(0,i), score)
     }
   }
   return(wineTree)
@@ -195,9 +347,8 @@ insert_into_tree <- function(wineMap, tasteCombine, i, score){
 
   if (exists){
     if (last){
-      scoreArray = wineMap[[key]]
-      newArray   = c((scoreArray[1] + 1),
-       ((scoreArray[1] * scoreArray[2] + score)/(scoreArray[1]+1)))
+      scoreArray     = wineMap[[key]]
+      newArray       = c(scoreArray, score)
       wineMap[[key]] <- newArray
       return(wineMap)
 
@@ -207,7 +358,7 @@ insert_into_tree <- function(wineMap, tasteCombine, i, score){
     }
   } else {
     if (last){
-      newArray = c(1, score)
+      newArray       = c(score)
       wineMap[[key]] <- newArray
       return(wineMap)
 
@@ -219,7 +370,9 @@ insert_into_tree <- function(wineMap, tasteCombine, i, score){
   }
 }
 
-#OLD CODE
+## ----------------------------------------------------------------------------------------------------------------------
+## -------------------------------------------- Old Code --------------------------------------------
+## ----------------------------------------------------------------------------------------------------------------------
 
 #create_tree_from_array <- function(setin){
 #  output = {}

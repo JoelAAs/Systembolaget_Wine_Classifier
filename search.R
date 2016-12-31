@@ -16,7 +16,7 @@ search_wine_artnr <- function(artnr) {
 search_wine_name <- function(name) {
 
   return(all_wines[
-	    which(grepl(name, all_wines$Namn, F, F, T) | 
+	    which(grepl(name, all_wines$Namn, F, F, T) |
 	    grepl(name, all_wines$Namn2, F, F, T)),])
 
 }
@@ -28,7 +28,7 @@ search_wine_name <- function(name) {
 # RETURNS: All wines that contain grape in RavarorBeskrivning.
 # PRE: Requires the all_wine frame to be built by wine_classify.
 search_wine_grape <- function(grape) {
-    
+
     return(all_wines[
         which(grepl(grape, all_wines$RavarorBeskrivning, F, F, T)),])
 
@@ -78,6 +78,29 @@ search_topN <- function(N, show_only_new = F) {
 
 }
 
+# search_topN(N, show_only_new)
+# BRIEF: Gives the top N wines based on rating. If show_only_new is not given
+#         (or is given as F), this includes wines which already have a score, if
+#         show_only_new is given as T, all wines which already have a score will
+#         be ignored.
+# ARGUMENTS:
+# N             = The number of wines to show.
+# show_only_new = If T, includes only wines that have not been assigned a real
+#                  score, otherwise, include all wines.
+# PRE:   Requires the all_wine frame to be built by wine_classify.
+search_topNFreq <- function(N, show_only_new = F) {
+  all_wines_tmp <- all_wines[order(all_wines$NegLogPred,decreasing = T),]
+
+  if(show_only_new) {
+	  result <- head(all_wines_tmp[!is.finite(all_wines_tmp$NegLogPred),], N)
+  } else {
+	  result <- head(all_wines_tmp, N)
+  }
+  # Return the result
+  return(result)
+
+}
+
 # search_taste_terms(tvec)
 # BRIEF: Returns all wines which contains the specified taste strings.
 # ARGUMENTS:
@@ -115,7 +138,7 @@ search_region <- function() {
 # PRE: Requires the classify.R source, for access to classification data and the
 #       all_wines frame.
 search_grapes <- function() {
-  
+
   grapes <- make_score_RCGY(all_wines)
   grapes <- grapes[which(grapes$type == "Grape"),]
   return(grapes[order(grapes$score, decreasing = TRUE), c("name", "score")])
@@ -144,10 +167,10 @@ search_wine_unclear_score <- function() {
 
   for(i in 1:length(my_wine$Varnummer)) {
 
-    myvec = c(my_wine$RCGY_predicted[i], 
-	      my_wine$Taste_predicted[i], 
+    myvec = c(my_wine$RCGY_predicted[i],
+	      my_wine$Taste_predicted[i],
 	      my_wine$bar_predicted[i])
-    
+
     mymin <- min(myvec, na.rm = T)
 
     mymax <- max(myvec, na.rm = T)

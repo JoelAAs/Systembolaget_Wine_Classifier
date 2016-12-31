@@ -19,20 +19,20 @@ get_class_wine <- function(invar) {
   outvar <- lapply(outvar, function(x) gsub(",", "\\.", x))
 
   return(outvar)
-    
+
 }
 
 # get_score_per_word(word_list, score_list)
-# BRIEF: 
+# BRIEF:
 get_score_per_word <- function(word_list, score_list){
   word_list <- unlist(unique(strsplit(word_list, "\\.")))
   score_tmp <- 0
   k = 0
-  
+
   for(i in 1:length(word_list)){
     if (word_list[i] %in% score_list$word){
       k = k + 1
-      score_tmp <- score_tmp + 
+      score_tmp <- score_tmp +
 	    as.numeric(score_list$score[which(word_list[i] == score_list$word)])
     }
   }
@@ -61,23 +61,23 @@ get_score_sub <- function(in_str, current_score){
     score <- NA
   }
   return(score)
-  
+
 }
 
 # make_score_Bar(wine_in)
-# BRIEF: 
+# BRIEF:
 make_score_Bar <- function(wine_in){
-  
-  
+
+
   table_fyllighet            <- data.frame(name = character(0),score = numeric(0), stringsAsFactors=F)
   table_stravhet             <- data.frame(name = character(0), score = numeric(0),  stringsAsFactors=F)
   table_fruktsyra            <- data.frame(name = character(0),score = numeric(0), stringsAsFactors=F)
-  
+
   wine_in      <- wine_in[which(is.finite(wine_in$GivenScore)),]
   fyllighet    <- unique(wine_in$fyllighet)
   stravhet     <- unique(wine_in$stravhet)
   fruktsyra    <- unique(wine_in$fruktsyra)
-  
+
   for(i in 1:length(fyllighet)){
     tmp            <- data.frame(fyllighet[i],
                                  mean(wine_in$GivenScore[which(wine_in$fyllighet == fyllighet[i])]),
@@ -85,7 +85,7 @@ make_score_Bar <- function(wine_in){
     colnames(tmp)  <- c("name","score")
     table_fyllighet <- rbind(table_fyllighet,tmp)
   }
-  
+
   for(i in 1:length(stravhet)){
     tmp            <- data.frame(stravhet[i],
                                  mean(wine_in$GivenScore[which(wine_in$stravhet == stravhet[i])]),
@@ -93,7 +93,7 @@ make_score_Bar <- function(wine_in){
     colnames(tmp)  <- c("name","score")
     table_stravhet <- rbind(table_stravhet,tmp)
   }
-  
+
   for(i in 1:length(fruktsyra)){
     tmp            <- data.frame(fruktsyra[i],
                                  mean(wine_in$GivenScore[which(wine_in$fruktsyra == fruktsyra[i])]),
@@ -103,14 +103,14 @@ make_score_Bar <- function(wine_in){
   }
 
   return(list(table_fyllighet,table_stravhet,table_fruktsyra))
-  
+
 }
 
 # make_score_RCGY(wine_in)
-# BRIEF: 
+# BRIEF:
 make_score_RCGY <- function(wine_in){
-  
-  
+
+
   table_out             <- data.frame(name =character(0),score = numeric(0), type = character(0), stringsAsFactors=F)
   wine_in               <- wine_in[which(is.finite(wine_in$GivenScore)),]
   wine_in$simple_region <- unlist(lapply(wine_in$Ursprung, function(x) x<- strsplit(x,",")[[1]][1]))
@@ -123,23 +123,23 @@ make_score_RCGY <- function(wine_in){
   grape   <- grape[!is.na(grape)]
   year    <- unique(wine_in$Argang)
   year    <- year[!is.na(year)]
- 
+
   for(i in 1:length(regions)){
     tmp <- data.frame(regions[i],mean(wine_in$GivenScore[
-	    which(wine_in$simple_region == regions[i])]), "Region", 
+	    which(wine_in$simple_region == regions[i])]), "Region",
 	    stringsAsFactors = F)
     colnames(tmp) <- c("name", "score", "type")
     table_out <- rbind(table_out,tmp)
   }
-  
+
   for(i in 1:length(country)){
     tmp <- data.frame(country[i],mean(wine_in$GivenScore[
-	    which(wine_in$Ursprunglandnamn == country[i])]), "Country",  
+	    which(wine_in$Ursprunglandnamn == country[i])]), "Country",
 	    stringsAsFactors = F)
     colnames(tmp) <- c("name", "score", "type")
     table_out <- rbind(table_out,tmp)
   }
-  
+
   for(i in 1:length(grape)){
     tmp <- data.frame(grape[i],mean(wine_in$GivenScore[
 	    which(wine_in$class_grape == grape[i])]),  "Grape",
@@ -147,7 +147,7 @@ make_score_RCGY <- function(wine_in){
     colnames(tmp) <- c("name", "score", "type")
     table_out <- rbind(table_out,tmp)
   }
-  
+
   for(i in 1:length(year)){
     tmp <- data.frame(year[i],mean(wine_in$GivenScore[
 	    which(wine_in$Argang == year[i])]), "Year",
@@ -160,16 +160,16 @@ make_score_RCGY <- function(wine_in){
 }
 
 # make_score_taste(wine_in)
-# BRIEF: 
+# BRIEF:
 make_score_taste <- function(wine_in){
-  
+
   wine_in      <- wine_in[which(is.finite(wine_in$GivenScore)),]
-  
+
   all_taste    <- unlist(lapply(wine_in$smak, function(x) x<- strsplit(x,"\\.")))
   unique_taste <- unique(all_taste)
-  
+
   taste_score  <- data.frame(word = character(0), score = numeric(0), stringsAsFactors = F)
-  
+
   for (i in 1:length(unique_taste)){
 
     score_tmp           <- data.frame(unique_taste[i], mean(wine_in$GivenScore[which(grepl(unique_taste[i], wine_in$smak, F, F, T))]),stringsAsFactors = F)
@@ -177,14 +177,14 @@ make_score_taste <- function(wine_in){
     taste_score         <- rbind(taste_score,score_tmp)
   }
 
-  return(taste_score) 
+  return(taste_score)
 }
 
 # predict_score_RCGY(wine_in, current_score_RCGT)
-# BRIEF: 
+# BRIEF:
 predict_score_RCGY <-function(wine_in, current_score_RCGY){
-  score_RCGY <- c() 
-  
+  score_RCGY <- c()
+
   wine_in$simple_region <- unlist(lapply(wine_in$Ursprung, function(x) x<- strsplit(x,",")[[1]][1]))
   wine_in$class_grape   <- get_class_wine(wine_in$RavarorBeskrivning)
 
@@ -214,15 +214,15 @@ predict_score_RCGY <-function(wine_in, current_score_RCGY){
 
     score_RCGY[i] <- mean(c(R,C,G,Y),na.rm=TRUE) - p
   }
- 
+
   return(score_RCGY)
 }
 
 # predict_score_bar(wine_in, current_score_bar)
-# BRIEF: 
+# BRIEF:
 predict_score_bar <- function(wine_in, current_score_bar){
-  
-  score_bar <- c() 
+
+  score_bar <- c()
 
   for (i in 1:length(wine_in$Artikelid)){
 
@@ -239,7 +239,7 @@ predict_score_bar <- function(wine_in, current_score_bar){
     if(is.na(Frukts)){
       k = k + 1
     }
-    
+
     p = 50*k/3
     if(k == 3){
       p = 0
@@ -248,15 +248,15 @@ predict_score_bar <- function(wine_in, current_score_bar){
     score_bar[i] <- mean(c(Frukts,Strav,Fyll),na.rm=TRUE)- p
 
   }
-  
+
   return(score_bar)
-  
+
 }
 
 # predict_score_taste(wine_in, current_score_taste)
-# BRIEF: 
+# BRIEF:
 predict_score_taste <- function(all_wine,current_score_taste){
-  
+
   score_out <- unlist(lapply(all_wine$smak, function(x) x<- get_score_per_word(x,current_score_taste)))
 
   return(score_out)
@@ -280,7 +280,7 @@ classify_wines <- function(winefile, scorefile) {
     all_wine_scores <- read.csv(scorefile, stringsAsFactors = F)
 
     # Merge the wine data and metadata with the user given scores.
-    all_wine = merge(x = all_wine_data, y = all_wine_scores, 
+    all_wine = merge(x = all_wine_data, y = all_wine_scores,
                 by = "Varnummer", all = TRUE)
 
     # Calculate the current scores for each property.
@@ -292,12 +292,15 @@ classify_wines <- function(winefile, scorefile) {
     all_wine$RCGY_predicted  <- predict_score_RCGY(all_wine,current_score_RCGY)
     all_wine$bar_predicted   <- predict_score_bar(all_wine, current_score_bar)
     all_wine$Taste_predicted <- predict_score_taste(all_wine,current_score_taste)
-    all_wine$PredictedScore  <- (all_wine$RCGY_predicted   + 
-				 all_wine$bar_predicted    + 
+    all_wine$PredictedScore  <- (all_wine$RCGY_predicted   +
+				 all_wine$bar_predicted    +
 				 all_wine$Taste_predicted) / 3
+
+    # Score prediction using negative log frequency. (see "get_unique_combinations.R")
+    all_wine <- predict_function_negativelog(all_wine)
+
 
     # Order the wines by predicted score. and return the dataframe..
     return(all_wine[order(all_wine$PredictedScore,decreasing = T),])
 
 }
-
