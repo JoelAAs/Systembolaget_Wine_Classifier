@@ -92,7 +92,7 @@ search_topNFreq <- function(N, show_only_new = F) {
   all_wines_tmp <- all_wines[order(all_wines$NegLogPred,decreasing = T),]
 
   if(show_only_new) {
-	  result <- head(all_wines_tmp[!is.finite(all_wines_tmp$NegLogPred),], N)
+	  result <- head(all_wines_tmp[!is.finite(all_wines_tmp$GivenScore),], N)
   } else {
 	  result <- head(all_wines_tmp, N)
   }

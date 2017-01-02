@@ -47,6 +47,6 @@ present_wine_tbl <- function(wine_table) {
 present_wine_lst <- function(wine_table) {
 
   print(wine_table[,
-    c("Varnummer", "Namn", "GivenScore", "PredictedScore", "PrisPerLiter")])
+    c("Varnummer", "Namn", "GivenScore", "PredictedScore", "NegLogPred", "PrisPerLiter")])
 
 }
