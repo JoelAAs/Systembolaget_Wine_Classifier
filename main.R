@@ -7,7 +7,7 @@ Sys.setlocale(locale="C")
 source("./config.R")
 
 # Include the actual program.
-source("./crawler.R")
+#source("./crawler.R")
 source("./classify.R", encoding="UTF-8")
 source("./search.R")
 source("./present.R")

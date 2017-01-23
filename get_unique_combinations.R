@@ -54,7 +54,7 @@
 ## -------------------------------------------- Predciction score functions ---------------------------------------------
 ## ----------------------------------------------------------------------------------------------------------------------
 
-# predict_function_negativelog(allWineData, scoredWineData)
+# predict_function_negativelog(allWineData)
 # BRIEF: Predict a score for all wines dependent of the -log(frequency) of the specific combinations and words.
 # ARGUMENTS:
 # allWineData    = Data frame of all information from systembolaget
