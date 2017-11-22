@@ -14,6 +14,9 @@ matches between combinations of taste keywords. The logic of this is that if a c
 of keywords from one wine rarely matches another then the score of that match
  should reflect the "uniqness" of that wine.
 
+Three different reggression tree score prediction metrics are used; Recursive partitioned
+regression trees, Bootstrap aggregated reggression and random forest.
+
 The main analysis part of the program is written in R (under Rcode) and the webcrawler
 is written in python (under python). The latest scrapped data is under Data.
 

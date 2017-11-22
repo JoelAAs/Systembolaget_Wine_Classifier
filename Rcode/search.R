@@ -62,10 +62,30 @@ search_wine_predscore_price <- function(minscore, maxscore, minprice, maxprice) 
 #         be ignored.
 # ARGUMENTS:
 # N             = The number of wines to show.
+# metric        = The choosen metric (character) or number corresponding (1-5)
 # show_only_new = If T, includes only wines that have not been assigned a real
 #                  score, otherwise, include all wines.
 # PRE:   Requires the all_wine frame to be built by wine_classify.
-search_topN <- function(N, show_only_new = F) {
+search_topN <- function(N, metric=1, show_only_new = F) {
+  viable <- list("PredictedScore",
+   "NegLogPred",
+   "RpartPred",
+   "BaggingPred",
+   "RandomForestPred",
+   "MeanPredicted",
+   1,2,3,4,5,6)
+
+  if (!(metric %in% viable)) { return(NA)}
+  if (is.numeric(metric)){
+    metric =c("PredictedScore",
+     "NegLogPred",
+     "RpartPred",
+     "BaggingPred",
+     "RandomForestPred",
+     "MeanPredicted")[metric]
+  }
+
+  all_wines <- all_wines[order(all_wines[, metric],decreasing = T),]
 
     if(show_only_new) {
 	result <- head(all_wines[!is.finite(all_wines$GivenScore),], N)
@@ -75,29 +95,6 @@ search_topN <- function(N, show_only_new = F) {
 
     # Return the result
     return(result)
-
-}
-
-# search_topN(N, show_only_new)
-# BRIEF: Gives the top N wines based on rating. If show_only_new is not given
-#         (or is given as F), this includes wines which already have a score, if
-#         show_only_new is given as T, all wines which already have a score will
-#         be ignored.
-# ARGUMENTS:
-# N             = The number of wines to show.
-# show_only_new = If T, includes only wines that have not been assigned a real
-#                  score, otherwise, include all wines.
-# PRE:   Requires the all_wine frame to be built by wine_classify.
-search_topNFreq <- function(N, show_only_new = F) {
-  all_wines_tmp <- all_wines[order(all_wines$NegLogPred,decreasing = T),]
-
-  if(show_only_new) {
-	  result <- head(all_wines_tmp[!is.finite(all_wines_tmp$GivenScore),], N)
-  } else {
-	  result <- head(all_wines_tmp, N)
-  }
-  # Return the result
-  return(result)
 
 }
 

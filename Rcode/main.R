@@ -14,7 +14,8 @@ source("./libraries.R")
 source("./classify.R", encoding="UTF-8")
 source("./search.R")
 source("./present.R")
-source("./get_unique_combinations.R")
+source("./logFreqRegressionTree.R")
+source("./regressionTree.R")
 
 
 # Create the dataframe the search functions will operate on.

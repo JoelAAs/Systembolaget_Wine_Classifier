@@ -258,7 +258,7 @@ predict_score_bar <- function(wine_in, current_score_bar){
 predict_score_taste <- function(all_wine,current_score_taste){
 
   score_out <- unlist(lapply(all_wine$smak, function(x) x<- get_score_per_word(x,current_score_taste)))
-
+  score_out[score_out == 0] = NaN
   return(score_out)
 }
 
@@ -292,13 +292,16 @@ classify_wines <- function(winefile, scorefile) {
     all_wine$RCGY_predicted  <- predict_score_RCGY(all_wine,current_score_RCGY)
     all_wine$bar_predicted   <- predict_score_bar(all_wine, current_score_bar)
     all_wine$Taste_predicted <- predict_score_taste(all_wine,current_score_taste)
-    all_wine$PredictedScore  <- (all_wine$RCGY_predicted   +
-				 all_wine$bar_predicted    +
-				 all_wine$Taste_predicted) / 3
+    all_wine$PredictedScore  <- apply(all_wine[,
+					c("RCGY_predicted", "bar_predicted","Taste_predicted")],
+					1,
+					function(x) mean(x[!is.nan(unlist(x))],
+							rm.na=T))
 
     # Score prediction using negative log frequency. (see "get_unique_combinations.R")
     all_wine <- predict_function_negativelog(all_wine)
-
+    all_wine <- classifyRegressionTrees(all_wine)
+    all_wine$MeanPredicted <- apply(all_wine[,36:40], 1, mean)
 
     # Order the wines by predicted score. and return the dataframe..
     return(all_wine[order(all_wine$PredictedScore,decreasing = T),])

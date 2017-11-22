@@ -16,10 +16,14 @@ present_wine_tbl <- function(wine_table) {
     }
 
     message("+--[ ", i, " ]--[ ", full_name, " ]-------------")
-    message("| Nr: ", wine_table$Varnummer[i],
-	    "   Predicted score: ", round(wine_table$PredictedScore[i]),
-      "   Frequency score: ", round(wine_table$NegLogPred[i]),
-	    "   Given score: ", wine_table$GivenScore[i])
+    message("| Nr: ", wine_table$Varnummer[i], "\n",
+	    "|  Predicted score: ", round(wine_table$PredictedScore[i]),
+      "\t\tFrequency score: ", round(wine_table$NegLogPred[i]), "\n",
+      "|  Rparted score: ", round(wine_table$RpartPred[i]),
+      "\t\tBagging score: ", round(wine_table$BaggingPred[i]), "\n",
+      "|  RandomForest score: ", round(wine_table$RandomForestPred[i]),
+      "\tMean predicted Score: ", round(wine_table$MeanPredicted[i]), "\n",
+	    "|  Given score: ", wine_table$GivenScore[i])
     message("| ")
 
     smak_str = wine_table$smak[i]
