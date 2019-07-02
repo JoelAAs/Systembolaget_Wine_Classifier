@@ -1,58 +1,39 @@
-#calculate_combination_weights <- function(all_wine_data, all_wine_scores){
-#  allWine     = merge(x = all_wine_data, y = all_wine_scores,
-#                      by = "Varnummer", all = TRUE)
-#  allWine     = allWine[!duplicated(allWine$Namn), ]
-#  allWine     = allWine[!duplicated(allWine$Varnummer), ]
-#  allWine     = allWine[!is.na(allWine$smak), ]
-#  scoredWine  = allWine[!is.na(allWine$GivenScore),]
-#
-#  for (i in 1:nrow(scoredWine)) {
-#    leftOutTest <- scoredWine[i, ] # AKA Leave-one-out cross-validation
-#    traningSet  <- scoredWine[-i,]
-#    trainedTree <- create_full_tree(traningSet) # TODO: förstå varför den klagar, borde inte vara för mycket (förmycket data blir fel? borde inte) Av någon anledning är coveage högre än vad det borde
-#
-#    testWords             <- sort(unlist(strsplit(leftOutTest$smak,"\\.")))
-#    testWords             <- testWords[testWords != ""]  #NOTE: Fulhack för någonstans lägger den in ".."
-#    testScoreDF           <- create_combination_score_DF(testWords, trainedTree)
-#    testScoreDF$FullScore <- testScoreDF$DepthScore*testScoreDF$Coverage
-#
-#    if(!is.null(nrow(testScoreDF)) && nrow(testScoreDF) != 0){
-#      meanScoreDepthTmp           <- ddply(testScoreDF,
-#                                         c("Depth"),
-#                                         function(x) c(sum(x$FullScore)/sum(x$Coverage),sum(x$Coverage))) #Package plyr
-#
-#      colnames(meanScoreDepthTmp)  <- c("Depth", "AvgDepthScore", "TotalCoverage")
-#      meanScoreDepthTmp$GivenScore <- rep(leftOutTest$GivenScore,nrow(meanScoreDepthTmp))
-#      meanScoreDepthTmp$ID         <- rep(i,nrow(meanScoreDepthTmp))
-#      meanScoreDepthTmp$Depth      <- as.numeric(meanScoreDepthTmp$Depth)
-#      if(exists("meanScoreDepth")){
-#        meanScoreDepth <- rbind(meanScoreDepth, meanScoreDepthTmp)
-#      } else {
-#        meanScoreDepth <- meanScoreDepthTmp
-#      }
-#    }
-#  }
-#  meanScoreDepth$Depth <- as.numeric(meanScoreDepth$Depth)
-#  depthWeights         <- array(NA,length(unique(meanScoreDepth$Depth)) - 1,
-#                          dimnames = list(unique(meanScoreDepth$Depth)[-1]))
-#
-#  for (j in unique(meanScoreDepth$Depth)[-1]){ #This works since depth 1 will allways be first
-#    usedData <- meanScoreDepth[meanScoreDepth$Depth == j]
-#    weight   <- sum(usedData$GivenScore*usedData$TotalCoverage)/
-#                sum(usedData$AvgDepthScore*usedData$TotalCoverage)
-#
-#    error_function <- function(parameterInital){
-#
-#    }
-#
-#
-#  }
-#  #TODO: Nu har du din data, dags att analysera
-#}
-
 ## ----------------------------------------------------------------------------------------------------------------------
 ## -------------------------------------------- Predciction score functions ---------------------------------------------
 ## ----------------------------------------------------------------------------------------------------------------------
+
+
+# predict_function_negativelog(allWineData)
+# BRIEF: Predict a score for all wines dependent of the -log(frequency) of the specific combinations and words.
+# ARGUMENTS:
+# allWineData    = Data frame of all information from systembolaget
+# RETURNS: (double) The predicted score of the wine. NA if no combinatiopns are present
+leave_one_out_neg_log <- function(allWine){
+  message("Calculating prediction error of 'uniqness' analysis")
+  scoredWine = allWine[!is.na(allWine$GivenScore),]
+  scoredWine = scoredWine[!is.na(scoredWine$smak), ]
+
+  full_validation <- scoredWine[, c("Varnummer", "GivenScore")]
+  pred_one_out = array(NA, nrow(scoredWine))
+  for (validate_idx in 1:nrow(scoredWine)) {
+    n = n +1
+    validation_set <- scoredWine[validate_idx, ]
+    train_set <- scoredWine[-validate_idx, ]
+
+    nrDataPoints <- calculate_nr_points_in_tree(train_set)
+    wineTree     <- create_full_tree(train_set)
+    
+    pred_one_out[validate_idx] = distance_function_negativelog(
+        sort(unlist(strsplit(scoredWine[validate_idx,"smak"],"\\."))),
+        wineTree,
+        nrDataPoints)
+  }
+  full_validation$OneOut = pred_one_out
+  pred_one_out_diff = full_validation$GivenScore - full_validation$OneOut
+
+  return(pred_one_out_diff)
+
+}
 
 # predict_function_negativelog(allWineData)
 # BRIEF: Predict a score for all wines dependent of the -log(frequency) of the specific combinations and words.
@@ -60,8 +41,8 @@
 # allWineData    = Data frame of all information from systembolaget
 # RETURNS: (double) The predicted score of the wine. NA if no combinatiopns are present
 predict_function_negativelog <- function(allWine){
-  scoredWine   = allWine[!is.na(allWine$GivenScore),]
-  scoredWine      = scoredWine[!is.na(scoredWine$smak), ]
+  scoredWine = allWine[!is.na(allWine$GivenScore),]
+  scoredWine = scoredWine[!is.na(scoredWine$smak), ]
 
   nrDataPoints <- calculate_nr_points_in_tree(scoredWine)
   wineTree     <- create_full_tree(scoredWine)
@@ -75,6 +56,9 @@ predict_function_negativelog <- function(allWine){
 
 }
 
+#' @Author: Max Karlsson
+cat("sp??ksnor\n")
+
 # create_combination_score_DF(reviewWords, wineTree, nrDataPoints)
 # BRIEF: Predict a score dependent of the -log(frequency) of the specific combinations and words.
 # ARGUMENTS:
@@ -85,7 +69,7 @@ distance_function_negativelog <- function(reviewWords, wineTree, nrDataPoints) {
   if (is.na(reviewWords[1])) {
     return(NA)
   }
-  reviewWords            <- reviewWords[reviewWords != ""]  #NOTE: Fulhack för någonstans lägger den in ".."
+  reviewWords            <- reviewWords[reviewWords != ""]  #NOTE: Fulhack f??r n??gonstans l??gger den in ".."
   currentWineCombination <- combination_of_length(reviewWords)
   nrRowCurrent           <- nrow(currentWineCombination)
   negLogFreqArray        <- array(NA,nrow(currentWineCombination))
@@ -369,53 +353,3 @@ insert_into_tree <- function(wineMap, tasteCombine, i, score){
     }
   }
 }
-
-## ----------------------------------------------------------------------------------------------------------------------
-## -------------------------------------------- Old Code --------------------------------------------
-## ----------------------------------------------------------------------------------------------------------------------
-
-#create_tree_from_array <- function(setin){
-#  output = {}
-#  for (i in 2:length(setin)){ #Creates a tree of combinations with depth 2:length(setin)
-#    output[i-1] = create_tree_from_array_prim(setin,i,1)
-#  }
-#  return(output)
-#}
-#
-#create_tree_from_array_prim <- function(setin,depth,idx){
-#  if(depth == 1){
-#    last_level = vector("list",length(setin)-idx)
-#    for (i in idx+1:length(setin)){ #Sets the avaliable elemtes as the last level
-#      last_level[i] = setin[i]
-#    }
-#    return(last_level)
-#  } else {
-#    count = 1
-#    next_level = vector("list",length(setin)-depth+2)
-#    next_level[count] = setin[idx]
-#    for (i in (idx+1):(length(setin)-depth+2)){ #Gets remaning combinations from this point
-#      count = count +1
-#      next_level[count] = create_tree_from_array_prim(setin,depth-1,idx+1)
-#    }
-#    return(next_level)
-#  }
-#}
-#
-#
-#get_score_prim <- function(wineTree, singleTree, depth, pos, levelscore){
-#  for (j in length(singleTree)){
-#
-#  }
-#
-#}
-#
-#get_score_tree <- function(setin,wineTree) {
-#  depth_score = {}
-#  for (i in 2:length(setin)){
-#    current_depth = tree_unique_combinations(setin, i)
-#    for (j in 1:length(output)){
-#      depth_score[j] = get_score_prim(wineTree, current_depth,i,array(0,i))
-#    }
-#  }
-#  return(depth_score)
-#}

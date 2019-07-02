@@ -72,19 +72,16 @@ def get_review_and_clocks(article_id):
     start_url = "http://www.systembolaget.se/Sok-dryck/Dryck/?varuNr="
     target_url = start_url + article_id
     page_code = requests.get(target_url)
+    print(target_url)
     page_as_text = page_code.text
     wine_soup = BeautifulSoup(page_as_text, "lxml")
     taste_keys = "inte testat"
     taste_clocks = wine_soup.findAll("span", {"class": "cmp-screen-reader-text"})
-    regex = re.compile("\d+$")
     skip = False
     try:
-        fyllighet = unicodedata.normalize("NFKD", taste_clocks[0].text).encode("ascii", "ignore")
-        fyllighet = regex.findall(fyllighet)[0]
-        stravhet = unicodedata.normalize("NFKD", taste_clocks[1].text).encode("ascii", "ignore")
-        stravhet = regex.findall(stravhet)[0]
-        fruktsyra = unicodedata.normalize("NFKD", taste_clocks[2].text).encode("ascii", "ignore")
-        fruktsyra = regex.findall(fruktsyra)[0]
+        fyllighet = re.search("[0-9]+", taste_clocks[2].text).group()
+        stravhet = re.search("[0-9]+", taste_clocks[3].text).group()
+        fruktsyra = re.search("[0-9]+", taste_clocks[4].text).group()
     except (AttributeError, IndexError):
         fyllighet = ""
         stravhet = ""
@@ -93,7 +90,7 @@ def get_review_and_clocks(article_id):
     try:
         taste_keys = sanitize_taste(desc[0].text)
     except (IndexError, AttributeError):
-        print "No review, skipping"
+        print("No review, skipping")
         skip = True
     if skip:
         return None
@@ -109,8 +106,7 @@ def create_wine_csv(csv_file, artikel, keys):
     if varugrupp != u"Rött vin":
         return 0
     elif arid not in previous_id and sort == u"FS":  # check if in DB already and make sure its ordenary sortiment
-        print "importing " + arid + " av typ " + varugrupp
-        print "not present in DB, adding.."
+        print("importing " + arid + " av typ " + varugrupp + "not present in DB, adding..")
         new_line = ""
         for key in keys:
             try:
@@ -193,17 +189,17 @@ def latest_update():
                     err = False
         if err:
             time_since_update = current_date - xml_update_time
-            print "The last update to the database was " + \
-                  str(time_since_update.days) + " days ago. \n"
-            user_input = str(raw_input("Enter \"Y\" to check for new update: "))
+            print ("The last update to the database was " +
+                str(time_since_update.days) + " days ago. \n")
+            user_input = str(input("Enter \"Y\" to check for new update: "))
             if user_input == "Y":
                 import_xml_into_db()
         else:
-            print "Something is wrong with info.txt, updating..."
+            print("Something is wrong with info.txt, updating...")
             import_xml_into_db()
     else:
         import_xml_into_db()
 
 
-# _______MAIN_________
-latest_update()
+if __name__ == "__main__":
+    latest_update()

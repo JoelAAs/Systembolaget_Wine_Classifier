@@ -270,18 +270,7 @@ predict_score_taste <- function(all_wine,current_score_taste){
 #              the wines.
 # scorefile = CSV file that contains article id and score mappings.
 # RETURNS: A dataframe containing information about the wines and their scores.
-classify_wines <- function(winefile, scorefile) {
-
-    # Read all the wine data and metadata.
-    all_wine_data <- read.csv(winefile, stringsAsFactors = F)
-    all_wine_data = all_wine_data[!duplicated(all_wine_data$Varnummer), ]
-
-    # Read the user provided scores.
-    all_wine_scores <- read.csv(scorefile, stringsAsFactors = F)
-
-    # Merge the wine data and metadata with the user given scores.
-    all_wine = merge(x = all_wine_data, y = all_wine_scores,
-                by = "Varnummer", all = TRUE)
+classify_wines <- function(all_wine) {
 
     # Calculate the current scores for each property.
     current_score_RCGY       <- make_score_RCGY(all_wine)
@@ -301,7 +290,7 @@ classify_wines <- function(winefile, scorefile) {
     # Score prediction using negative log frequency. (see "get_unique_combinations.R")
     all_wine <- predict_function_negativelog(all_wine)
     all_wine <- classifyRegressionTrees(all_wine)
-    all_wine$MeanPredicted <- apply(all_wine[,36:40], 1, mean)
+    all_wine$MeanPredicted <- apply(all_wine[, current_method_columns], 1, mean)
 
     # Order the wines by predicted score. and return the dataframe..
     return(all_wine[order(all_wine$PredictedScore,decreasing = T),])
