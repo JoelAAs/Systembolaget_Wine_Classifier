@@ -11,12 +11,11 @@
 leave_one_out_neg_log <- function(allWine){
   message("Calculating prediction error of 'uniqness' analysis")
   scoredWine = allWine[!is.na(allWine$GivenScore),]
-  scoredWine = scoredWine[!is.na(scoredWine$smak), ]
+  scoredWine = scoredWine[scoredWine$smak != "inte testad", ]
 
   full_validation <- scoredWine[, c("Varnummer", "GivenScore")]
   pred_one_out = array(NA, nrow(scoredWine))
   for (validate_idx in 1:nrow(scoredWine)) {
-    n = n +1
     validation_set <- scoredWine[validate_idx, ]
     train_set <- scoredWine[-validate_idx, ]
 
@@ -28,10 +27,10 @@ leave_one_out_neg_log <- function(allWine){
         wineTree,
         nrDataPoints)
   }
-  full_validation$OneOut = pred_one_out
-  pred_one_out_diff = full_validation$GivenScore - full_validation$OneOut
+  full_validation$log_pred = pred_one_out
+  
 
-  return(pred_one_out_diff)
+  return(full_validation)
 
 }
 

@@ -1,3 +1,58 @@
+# leave_oneout_regression(allWine)
+# BRIEF: leave-one-out error estimation recursive partitioned regression trees,
+# bootstrap aggregated regression trees and random forest.
+# ARGUMENTS:
+# allWine    = Data frame of all information from systembolaget
+# RETURNS: dataframe with each method as error:
+leave_oneout_regression <- function(allWine) {
+  allWineTmp <- allWine[allWine$smak != "inte testat", ]
+  wineTastes <- sapply(allWineTmp$smak, function(x) unique(unlist(strsplit(x,"\\."))))
+  wineTastes <- sapply(wineTastes, function(x) x[x != ""])
+  names(wineTastes) <- allWineTmp$Varnummer
+  uniTaste <- unique(unlist(wineTastes))
+
+  m <- matrix(0, ncol = length(uniTaste), nrow = nrow(allWineTmp))
+  binTaste <- as.data.frame(m)
+  colnames(binTaste)  <- uniTaste
+  row.names(binTaste) <- allWineTmp$Varnummer
+
+  for(i in 1:length(wineTastes)) {
+    binTaste[names(wineTastes[i]), unlist(wineTastes[i])] = 1
+  }
+
+  givenScore <- sapply(rownames(binTaste), function(x) allWineTmp[allWineTmp$Varnummer == x, "GivenScore"])
+  binDataDT <- cbind(binTaste, givenScore)
+  names(binDataDT) <- make.names(names(binDataDT))
+  binDataDTPred   <- binDataDT[is.na(binDataDT$givenScore),]
+  binDataDTScored <- binDataDT[!is.na(binDataDT$givenScore),]
+
+  error_frame <- data.frame(
+    Varnummer = character(0),
+    GivenScore = numeric(0),
+    RpartPred_test = numeric(0),
+    RandomForestPred_test = numeric(0),
+    stringsAsFactors = F)
+
+  for (out in sample(1:nrow(binDataDTScored), nrow(binDataDTScored))){
+    train_set = binDataDTScored[-out,]
+    test_set  = binDataDTScored[out,]
+    minimumSplits = 2
+    rePartFit <- rpart(givenScore~., data=train_set, control=rpart.control(minsplit = minimumSplits))
+    baggFit   <- bagging(givenScore~., data=train_set, control=rpart.control(minsplit = minimumSplits))
+    randFoFit <- randomForest(givenScore~., data=train_set)
+
+    ## Adding predicted scores
+    scoreFrame <- data.frame(Varnummer = rownames(test_set), GivenScore=test_set$givenScore, stringsAsFactors = F)
+    scoreFrame$RpartPred_test        <- predict(rePartFit, test_set[,-ncol(test_set)])
+    scoreFrame$RpartPred_test      <- predict(baggFit,   test_set[,-ncol(test_set)])
+    scoreFrame$RandomForestPred_test <- predict(randFoFit, test_set[,-ncol(test_set)])
+
+    error_frame <- rbind(error_frame, scoreFrame)
+  }
+  return(error_frame)
+}
+
+
 # classifyRegressionTrees(allWine)
 # BRIEF: Predict a score for all using recursive partitioned regression trees,
 # bootstrap aggregated regression trees and random forest.
@@ -21,14 +76,11 @@ classifyRegressionTrees<- function(allWine) {
   row.names(binTaste) <- allWineTmp$Varnummer
 
   for(i in 1:length(wineTastes)) {
-    #print(wineTastes[i])
+    # Populate matrix
     binTaste[names(wineTastes[i]), unlist(wineTastes[i])] = 1
   }
 
   ## NOTE:Phylogenetic view for future?
-  #distWine <- dist(binTaste,method = "binary")
-  #hc       <- hclust(distWine)
-
   givenScore <- sapply(rownames(binTaste), function(x) allWineTmp[allWineTmp$Varnummer == x, "GivenScore"])
 
   binDataDT <- cbind(binTaste, givenScore)
@@ -65,7 +117,7 @@ classifyRegressionTrees<- function(allWine) {
 
 
 # train_models(scoredwinefile)
-# BRIEF: Trains models from dataset and returns them 
+# BRIEF: Trains models from dataset and returns them
 # ARGUMENTS:
 # winefile  = The CSV file created by the crawler, containing information about
 #              the wines and given scores.
@@ -78,52 +130,36 @@ train_models <- function(scoredwinefile){
   wineTastes <- sapply(wineTastes, function(x) x[x != ""])
   names(wineTastes) <- allWineTmp$Varnummer
   uniTaste <- unique(unlist(wineTastes))
-  
+
   ## Create binary array of all kewords
   m <- matrix(0, ncol = length(uniTaste), nrow = nrow(allWineTmp))
   binTaste <- as.data.frame(m)
   colnames(binTaste)  <- uniTaste
   row.names(binTaste) <- allWineTmp$Varnummer
-  
+
   for(i in 1:length(wineTastes)) {
     #print(wineTastes[i])
     binTaste[names(wineTastes[i]), unlist(wineTastes[i])] = 1
   }
-  
+
   ## NOTE:Phylogenetic view for future?
   #distWine <- dist(binTaste,method = "binary")
   #hc       <- hclust(distWine)
-  
+
   givenScore <- sapply(rownames(binTaste), function(x) allWineTmp[allWineTmp$Varnummer == x, "GivenScore"])
-  
+
   binDataDT <- cbind(binTaste, givenScore)
   names(binDataDT) <- make.names(names(binDataDT))
   binDataDTPred   <- binDataDT[is.na(binDataDT$givenScore),]
   binDataDTScored <- binDataDT[!is.na(binDataDT$givenScore),]
-  
+
   ## Regression tree stuff. Givenscore as output agains all. Minimum attributes per split set to two
   ## NOTE: Add more splits when there is more data
   minimumSplits = 2
   rePartFit <- rpart(givenScore~., data=binDataDTScored, control=rpart.control(minsplit = minimumSplits))
   baggFit   <- bagging(givenScore~., data=binDataDTScored, control=rpart.control(minsplit = minimumSplits))
   randFoFit <- randomForest(givenScore~., data=binDataDTScored)
-  
+
   wine_tree <- create_full_tree(scoredwinefile)
-  
+
 }
-
-
-
-## Error stuff for testing. main accurucy testing and prediction variation elsewhere
-#errorFrame <- data.frame(GivenScore = binDataDTScored$givenScore)
-#errorFrame$errRe     <- (binDataDTScored$givenScore -  rePred)^2
-#errorFrame$errBag    <- (binDataDTScored$givenScore - bagPred)^2
-#errorFrame$errRandFo <- (binDataDTScored$givenScore - randFoPred)^2
-
-#plotFrame <- melt(errorFrame, id.vars = 1)
-#ggplot(plotFrame) +
-#  geom_density(aes(x=value, fill=variable), alpha = 0.2)
-
-#print(mseRe)
-#print(mseBag)
-#print(mseRandFo)

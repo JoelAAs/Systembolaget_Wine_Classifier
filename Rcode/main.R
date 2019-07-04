@@ -17,6 +17,7 @@ source(paste0(lib_path, "search.R"))
 source(paste0(lib_path, "present.R"))
 source(paste0(lib_path, "logFreqRegressionTree.R"))
 source(paste0(lib_path, "regressionTree.R"))
+source(paste0(lib_path, "error_and_validation.R"))
 
 
 # Create the dataframe the search functions will operate on.
@@ -38,11 +39,12 @@ if (!exists("all_wines")){
                    by = "Varnummer", all = TRUE)
 
   all_wines <- classify_wines(all_wine)
-  neg_log_pred_error <- leave_one_out_neg_log(all_wines)
   date_created = Sys.time()
 
   Generate
 }
+validate_wines(all_wine)
+
 message("Done!")
 
 # Print some use info
